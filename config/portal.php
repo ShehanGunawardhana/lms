@@ -111,6 +111,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Passwords for Seeders
+    |--------------------------------------------------------------------------
+    */
+    'passwords' => [
+        'super_admin' => env('SUPER_ADMIN_PASSWORD', 'password'),
+        'admin' => env('ADMIN_PASSWORD', 'password'),
+        'teacher' => env('TEACHER_PASSWORD', 'password'),
+        'parent' => env('PARENT_PASSWORD', 'password'),
+        'student' => env('STUDENT_PASSWORD', 'password'),
+        'printing_staff' => env('PRINT_STAFF_PASSWORD', 'password'),
+        'cashier' => env('CASHIER_PASSWORD', 'password'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Localization & Timezone
     |--------------------------------------------------------------------------
     */

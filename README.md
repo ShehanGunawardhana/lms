@@ -837,8 +837,8 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 - [x] **T-0.3** Tailwind theme tokens (colors, fonts, spacing), base Blade layouts (public, app, station), responsive navigation, Livewire and Alpine working. (§2)
 - [x] **T-0.4** UI component library: buttons, inputs, selects, cards, modals, tables, tabs, status pills, toasts, empty states, file-drop, countdown, pagination. All phone-friendly.
 - [x] **T-0.5** Institution foundation: `institutions`, `BelongsToInstitution` trait with global scope, current-institution resolver, `SettingsService` reading `config/portal.php` defaults, module toggles with middleware. (§19)
-- [ ] **T-0.6** Seed roles and permissions, base Policy helpers, Super Admin seeder, permission middleware. (§4)
-- [ ] **T-0.7** Audit logging with `spatie/laravel-activitylog`, an `audit()` helper, audit log viewer stub. (§14)
+- [x] **T-0.6** Seed roles and permissions, base Policy helpers, Super Admin seeder, permission middleware. (§4)
+- [x] **T-0.7** Audit logging with `spatie/laravel-activitylog`, an `audit()` helper, audit log viewer stub. (§14)
 - [ ] **T-0.8** `FileService`: `file_assets`, magic-byte type check, size and type whitelist, private disk with UUID names, signed download route with policy check. *Done when* tests prove a renamed fake file is rejected, a file over 50 MB is rejected, and a direct URL to storage is not reachable. (§10)
 - [ ] **T-0.9** Image re-encode and metadata strip, ZIP inspection (entry and size limits, no executables), queued ClamAV scan, `scan_status`, quarantine. (§10)
 - [ ] **T-0.10** Chunked, resumable upload endpoint and a reusable Resumable.js component with progress bar, retry and clear error messages. (§10)
@@ -1029,6 +1029,8 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-18 | T-0.3 | Tailwind theme tokens (brand colors, animations, hover effects), base layouts (public, app, station, guest), responsive navigation |
 | 2026-11-18 | T-0.4 | Responsive mobile-first UI component library (button, input, select, card, modal, table, tabs, badge, toast, empty-state, file-drop, countdown, pagination) |
 | 2026-11-18 | T-0.5 | Multi-institution foundation: institutions, BelongsToInstitution trait with global scope, InstitutionContext, SettingsService reading config/portal.php defaults with typed DB overrides, EnsureModuleEnabled middleware |
+| 2026-11-18 | T-0.6 | Seed roles & permissions (8 roles from §4), BasePolicy with object-level checks & Super Admin bypass, SuperAdminSeeder, permission middlewares |
+| 2026-11-18 | T-0.7 | Audit logging with Spatie activitylog, audit() helper with causer & institution metadata, livewire AuditLogViewer with search & event filters |
 
 ### Blockers and questions
 
