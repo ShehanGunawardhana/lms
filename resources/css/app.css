@@ -1,0 +1,120 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    
+    /* Primary Brand Palette: Royal Indigo */
+    --color-brand-50: #eef2ff;
+    --color-brand-100: #e0e7ff;
+    --color-brand-200: #c7d2fe;
+    --color-brand-300: #a5b4fc;
+    --color-brand-400: #818cf8;
+    --color-brand-500: #6366f1;
+    --color-brand-600: #4f46e5;
+    --color-brand-700: #4338ca;
+    --color-brand-800: #3730a3;
+    --color-brand-900: #312e81;
+    --color-brand-950: #1e1b4b;
+
+    /* Accent Palette: Electric Cyan */
+    --color-accent-50: #ecfeff;
+    --color-accent-100: #cffafe;
+    --color-accent-200: #a5f3fc;
+    --color-accent-300: #67e8f9;
+    --color-accent-400: #22d3ee;
+    --color-accent-500: #06b6d4;
+    --color-accent-600: #0891b2;
+    --color-accent-700: #0e7490;
+    --color-accent-800: #155e75;
+    --color-accent-900: #164e63;
+
+    /* Nursery Accent Palette: Warm Honey / Amber */
+    --color-nursery-50: #fffbeb;
+    --color-nursery-100: #fef3c7;
+    --color-nursery-200: #fde68a;
+    --color-nursery-300: #fcd34d;
+    --color-nursery-400: #fbbf24;
+    --color-nursery-500: #f59e0b;
+    --color-nursery-600: #d97706;
+    --color-nursery-700: #b45309;
+    --color-nursery-800: #92400e;
+    --color-nursery-900: #78350f;
+}
+
+/* Custom Interactive Animations & Micro-interactions */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+@keyframes shimmer {
+    100% { transform: translateX(100%); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-down {
+    animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-glow {
+    animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+/* Reusable UI Utility Classes */
+.card-hover {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.08), 0 8px 10px -6px rgba(79, 70, 229, 0.04);
+}
+
+.btn-interactive {
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-interactive:hover {
+    transform: translateY(-1px);
+}
+
+.btn-interactive:active {
+    transform: translateY(0);
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
