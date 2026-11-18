@@ -11,5 +11,6 @@ parameters:
 
     level: 5
 
-    ignoreErrors:
-        - identifier: trait.unused
+    reportUnmatchedIgnoredErrors: false
+
+    ignoreErrors: []
