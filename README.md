@@ -843,7 +843,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 - [x] **T-0.9** Image re-encode and metadata strip, ZIP inspection (entry and size limits, no executables), queued ClamAV scan, `scan_status`, quarantine. (§10)
 - [x] **T-0.10** Chunked, resumable upload endpoint and a reusable Resumable.js component with progress bar, retry and clear error messages. (§10)
 - [x] **T-0.11** Notification foundation: `NotificationService`, event-to-channel mapping, user preferences, mail and database channels, SMS and WhatsApp interfaces with `log` driver. (§12)
-- [ ] **T-0.12** Localization (translation files, locale switcher) and time zone helpers (store UTC, show institution time zone). (§15)
+- [x] **T-0.12** Localization (translation files, locale switcher) and time zone helpers (store UTC, show institution time zone). (§15)
 - [ ] **T-0.13** PWA manifest, icons, service worker with offline fallback page. (§15)
 - [ ] **T-0.14** *(Optional)* GitHub Actions workflow that runs `composer qa`.
 
@@ -1035,6 +1035,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-18 | T-0.9 | Image sanitization & EXIF stripping, deep ZIP inspection (entry & size limits, executable ban), queued ClamAV scan (ScanFileAsset) & malware quarantine |
 | 2026-11-18 | T-0.10 | Chunked, resumable upload endpoint with Pion receiver, Resumable.js component with progress bar, retry & clear error states, feature tests |
 | 2026-11-18 | T-0.11 | NotificationService with event-to-channel mapping, user notification preferences table, SmsChannelInterface & WhatsAppChannelInterface with log driver, GenericPortalNotification |
+| 2026-11-18 | T-0.12 | Localization (lang/en/portal.php, lang/si/portal.php, SetLocale middleware, locale switcher endpoint) & Timezone helpers (current_timezone, to_institution_tz, to_utc, format_portal_datetime) |
 
 ### Blockers and questions
 

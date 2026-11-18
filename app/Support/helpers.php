@@ -3,6 +3,7 @@
 use App\Models\Institution;
 use App\Services\InstitutionContext;
 use App\Services\SettingsService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Contracts\Activity;
 
@@ -62,5 +63,71 @@ if (! function_exists('audit')) {
         }
 
         return $logger->log($description);
+    }
+}
+
+if (! function_exists('current_timezone')) {
+    /**
+     * Get the active institution timezone (or fallback to UTC).
+     */
+    function current_timezone(): string
+    {
+        $institution = current_institution();
+        if ($institution && ! empty($institution->timezone)) {
+            return (string) $institution->timezone;
+        }
+
+        return (string) config('portal.timezone', config('app.timezone', 'UTC'));
+    }
+}
+
+if (! function_exists('to_institution_tz')) {
+    /**
+     * Convert a UTC datetime into the institution's timezone.
+     */
+    function to_institution_tz(Carbon|string|null $datetime, ?string $format = null): Carbon|string|null
+    {
+        if ($datetime === null) {
+            return null;
+        }
+
+        $carbon = is_string($datetime) ? Carbon::parse($datetime, 'UTC') : $datetime->copy()->setTimezone('UTC');
+        $converted = $carbon->setTimezone(current_timezone());
+
+        return $format ? $converted->format($format) : $converted;
+    }
+}
+
+if (! function_exists('to_utc')) {
+    /**
+     * Convert an institution-local datetime into UTC for database persistence.
+     */
+    function to_utc(Carbon|string|null $datetime, ?string $fromTimezone = null): ?Carbon
+    {
+        if ($datetime === null) {
+            return null;
+        }
+
+        $tz = $fromTimezone ?? current_timezone();
+
+        $carbon = is_string($datetime) ? Carbon::parse($datetime, $tz) : $datetime->copy()->setTimezone($tz);
+
+        return $carbon->setTimezone('UTC');
+    }
+}
+
+if (! function_exists('format_portal_datetime')) {
+    /**
+     * Format a UTC datetime for display in the institution timezone.
+     */
+    function format_portal_datetime(Carbon|string|null $datetime, string $format = 'Y-m-d H:i'): string
+    {
+        if ($datetime === null) {
+            return '—';
+        }
+
+        $converted = to_institution_tz($datetime);
+
+        return $converted instanceof Carbon ? $converted->format($format) : (string) $converted;
     }
 }

@@ -2,12 +2,16 @@
 
 use App\Http\Controllers\ChunkUploadController;
 use App\Http\Controllers\FileDownloadController;
+use App\Http\Controllers\LocaleController;
 use App\Livewire\Admin\AuditLogViewer;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/locale/{locale}', [LocaleController::class, 'switch'])
+    ->name('locale.switch');
 
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {

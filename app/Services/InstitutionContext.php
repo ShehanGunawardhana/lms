@@ -22,7 +22,11 @@ class InstitutionContext
     public function get(): ?Institution
     {
         if ($this->institution === null) {
-            $this->institution = Institution::query()->where('status', 'active')->first();
+            try {
+                $this->institution = Institution::query()->where('status', 'active')->first();
+            } catch (\Throwable) {
+                return null;
+            }
         }
 
         return $this->institution;
