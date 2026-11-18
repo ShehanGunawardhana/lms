@@ -13,6 +13,7 @@ use App\Livewire\Admin\UserManager;
 use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
 use App\Livewire\Profile\UserProfileManager;
+use App\Livewire\Teacher\PortfolioEditor;
 use App\Models\Institution;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -100,6 +101,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');
     })->middleware('role:teacher')->name('teacher.dashboard');
+
+    // Lecturer Portfolio Editor (§5.5, T-2.2)
+    Route::get('/teacher/portfolio', PortfolioEditor::class)
+        ->middleware('role:teacher')
+        ->name('teacher.portfolio');
 
     Route::get('/parent/dashboard', function () {
         return view('dashboards.parent');

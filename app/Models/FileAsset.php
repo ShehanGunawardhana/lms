@@ -80,4 +80,11 @@ class FileAsset extends Model
             ['uuid' => $this->uuid]
         );
     }
+
+    public function temporarySignedUrl(?\DateTimeInterface $expiration = null): string
+    {
+        $minutes = $expiration !== null ? max(1, (int) now()->diffInMinutes($expiration)) : 60;
+
+        return $this->getDownloadUrl($minutes);
+    }
 }
