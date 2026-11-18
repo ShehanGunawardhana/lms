@@ -856,7 +856,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 - [x] **T-1.5** Admin approvals queue for parents: approve or reject with a reason, notifications, audit. (§5.2)
 - [x] **T-1.6** Nursery `students` and `guardians`: CRUD, `guardian_student` links, several children per parent, admin links parent to child and class. (§6.5)
 - [x] **T-1.7** User profile, password change, notification preferences, language. 
-- [ ] **T-1.8** Dashboard shells for Admin, Teacher, Parent, Student, Printing Staff, Cashier and Attendance Marshal.
+- [x] **T-1.8** Dashboard shells for Admin, Teacher, Parent, Student, Printing Staff, Cashier and Attendance Marshal.
 - [ ] **T-1.9** Admin user management: list, search, filter, suspend, reactivate, deactivate.
 
 ### Phase 2: Public site and lecturer portfolios
@@ -1045,6 +1045,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-18 | T-1.5 | Admin parent approvals queue: Livewire ParentApprovalsQueue with pending/active/rejected filtering, one-click approve, mandatory-reason rejection modal, ParentApproval/Rejection notifications, and audit logging |
 | 2026-11-18 | T-1.6 | Nursery students & guardians roster: guardians, students, guardian_student, school_classes, enrollments tables & models, Livewire NurseryStudentManager with student CRUD, multi-guardian & multi-child linking, classroom group enrollment, and approval queue integration |
 | 2026-11-18 | T-1.7 | User profile & account preferences: Livewire UserProfileManager with name/email/phone updating, password changing with current password verification, multi-language switching (English/Sinhala/Tamil), multi-channel notification preference matrix (Email/In-App/SMS/WhatsApp), and audit logging |
+| 2026-11-18 | T-1.8 | Role-tailored dashboard shells for all 7 roles (Admin, Teacher, Parent, Student, Cashier, Printing Staff, Attendance Marshal), central dashboard role dispatcher, station kiosk integrations, and role-based access control |
 
 ### Blockers and questions
 

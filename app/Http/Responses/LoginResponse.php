@@ -57,7 +57,7 @@ class LoginResponse implements LoginResponseContract, RegisterResponseContract, 
         }
 
         if ($user->hasRole(RoleName::PrintingStaff->value)) {
-            return route('station.printing');
+            return route('printing.dashboard');
         }
 
         if ($user->hasRole(RoleName::Cashier->value)) {
@@ -65,7 +65,7 @@ class LoginResponse implements LoginResponseContract, RegisterResponseContract, 
         }
 
         if ($user->hasRole(RoleName::AttendanceMarshal->value)) {
-            return route('station.attendance');
+            return route('attendance.dashboard');
         }
 
         return url('/dashboard');

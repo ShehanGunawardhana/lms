@@ -104,6 +104,14 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboards.cashier');
     })->middleware('role:cashier')->name('cashier.dashboard');
 
+    Route::get('/printing/dashboard', function () {
+        return view('dashboards.printing');
+    })->middleware('role:super_admin|admin|printing_staff')->name('printing.dashboard');
+
+    Route::get('/attendance/dashboard', function () {
+        return view('dashboards.attendance');
+    })->middleware('role:super_admin|admin|attendance_marshal')->name('attendance.dashboard');
+
     // Station Mode (Kiosk) Routes
     Route::get('/station/attendance', function () {
         return view('stations.attendance');
