@@ -11,6 +11,7 @@ use App\Livewire\Admin\ParentApprovalsQueue;
 use App\Livewire\Admin\TeacherInvite;
 use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
+use App\Livewire\Profile\UserProfileManager;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +53,10 @@ Route::middleware(['auth'])->group(function () {
     // Two-Factor Authentication Management
     Route::get('/user/two-factor-setup', TwoFactorSetup::class)
         ->name('two-factor.setup');
+
+    // User Profile, Security, Language & Notification Preferences (§1.7)
+    Route::get('/user/profile', UserProfileManager::class)
+        ->name('profile.show');
 
     // Central Dashboard Redirect (routes user to their specific dashboard based on role)
     Route::get('/dashboard', function () {
