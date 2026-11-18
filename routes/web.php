@@ -3,11 +3,13 @@
 use App\Http\Controllers\ChunkUploadController;
 use App\Http\Controllers\FileDownloadController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PhoneVerificationController;
 use App\Http\Responses\LoginResponse;
 use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\TeacherInvite;
 use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -29,8 +31,21 @@ Route::get('/invitation/{token}', AcceptInvitation::class)
 Route::middleware(['auth'])->group(function () {
     // Awaiting Approval Screen (for pending parents/users)
     Route::get('/awaiting-approval', function () {
-        return view('auth.awaiting-approval');
+        /** @var User|null $user */
+        $user = auth()->user();
+        $profile = $user !== null ? $user->parentProfile()->with('children')->first() : null;
+
+        return view('auth.awaiting-approval', [
+            'user' => $user,
+            'profile' => $profile,
+        ]);
     })->name('awaiting-approval');
+
+    // Phone verification via SMS OTP (§5.2)
+    Route::post('/verification/phone/send', [PhoneVerificationController::class, 'sendOtp'])
+        ->name('verification.phone.send');
+    Route::post('/verification/phone/verify', [PhoneVerificationController::class, 'verifyOtp'])
+        ->name('verification.phone.verify');
 
     // Two-Factor Authentication Management
     Route::get('/user/two-factor-setup', TwoFactorSetup::class)

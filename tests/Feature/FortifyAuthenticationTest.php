@@ -152,6 +152,8 @@ class FortifyAuthenticationTest extends TestCase
             'name' => 'John Parent',
             'email' => 'john.parent@example.com',
             'phone' => '+1555123456',
+            'consent_terms' => '1',
+            'consent_child_safety' => '1',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
         ]);

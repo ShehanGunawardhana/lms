@@ -88,6 +88,16 @@ class User extends Authenticatable
         return $this->status === 'invited';
     }
 
+    public function isApproved(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === 'rejected';
+    }
+
     /**
      * @return HasMany<UserInvitation, $this>
      */
@@ -102,6 +112,14 @@ class User extends Authenticatable
     public function teacherProfile(): HasOne
     {
         return $this->hasOne(TeacherProfile::class);
+    }
+
+    /**
+     * @return HasOne<ParentProfile, $this>
+     */
+    public function parentProfile(): HasOne
+    {
+        return $this->hasOne(ParentProfile::class);
     }
 
     /**

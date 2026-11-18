@@ -45,8 +45,9 @@ if (! function_exists('audit')) {
      * @param  string  $description  Human-readable description
      * @param  Model|null  $subject  The affected model
      * @param  array<string, mixed>  $properties  Additional context data
+     * @param  Model|null  $causer  Explicit actor causing the event (defaults to auth()->user())
      */
-    function audit(string $event, string $description, ?Model $subject = null, array $properties = []): Activity
+    function audit(string $event, string $description, ?Model $subject = null, array $properties = [], ?Model $causer = null): Activity
     {
         $properties['institution_id'] = current_institution_id();
 
@@ -58,8 +59,9 @@ if (! function_exists('audit')) {
             $logger->performedOn($subject);
         }
 
-        if (auth()->check()) {
-            $logger->causedBy(auth()->user());
+        $causerToUse = $causer ?? (auth()->check() ? auth()->user() : null);
+        if ($causerToUse !== null) {
+            $logger->causedBy($causerToUse);
         }
 
         return $logger->log($description);

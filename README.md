@@ -852,7 +852,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 - [x] **T-1.1** Fortify: login, logout, password reset, email verification, throttling, role-based redirect to each dashboard. (§5)
 - [x] **T-1.2** Enforced two-factor authentication for Admin and Super Admin, with recovery codes. (§14)
 - [x] **T-1.3** Admin registers a teacher or lecturer. Invite link by email or SMS, teacher sets own password. (§5.1)
-- [ ] **T-1.4** Parent self-registration with parent and child details, consent checkboxes (including photo consent), email or phone verification, status `pending`, "awaiting approval" page. (§5.2)
+- [x] **T-1.4** Parent self-registration with parent and child details, consent checkboxes (including photo consent), email or phone verification, status `pending`, "awaiting approval" page. (§5.2)
 - [ ] **T-1.5** Admin approvals queue for parents: approve or reject with a reason, notifications, audit. (§5.2)
 - [ ] **T-1.6** Nursery `students` and `guardians`: CRUD, `guardian_student` links, several children per parent, admin links parent to child and class. (§6.5)
 - [ ] **T-1.7** User profile, password change, notification preferences, language. 
@@ -1041,6 +1041,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-18 | T-1.1 | Laravel Fortify full auth stack (login, register, password reset, 2FA challenge, email verify, awaiting-approval views), role-based dashboard redirects, account status validation (blocks suspended/rejected) & feature tests |
 | 2026-11-18 | T-1.2 | Mandatory two-factor authentication (EnsureTwoFactorEnabled middleware) for Super Admin and Admin, TwoFactorSetup Livewire component with TOTP QR and recovery codes management, feature tests |
 | 2026-11-18 | T-1.3 | Admin teacher invitation suite: user_invitations & teacher_profiles tables, email/SMS invite dispatch with expiring token, Livewire TeacherInvite manager with resend/revoke, and AcceptInvitation password activation flow |
+| 2026-11-18 | T-1.4 | Parent self-registration suite: parent_profiles & child_registrations tables, child details capture with encrypted medical notes, statutory & photo release consents, SMS OTP & email verification triggers, and dynamic awaiting-approval view |
 
 ### Blockers and questions
 
