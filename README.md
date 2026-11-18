@@ -861,7 +861,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 
 ### Phase 2: Public site and lecturer portfolios
 
-- [ ] **T-2.1** Public landing page using institution branding.
+- [x] **T-2.1** Public landing page using institution branding.
 - [ ] **T-2.2** Lecturer portfolio editor (photo, biography, qualifications, subjects, sample materials) with `draft → pending → published`. (§5.5)
 - [ ] **T-2.3** Admin portfolio review and publish.
 - [ ] **T-2.4** Public lecturer directory, portfolio page, and class listing with schedule, fee and an **Apply** button (wired in T-7.1).
@@ -1047,6 +1047,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-18 | T-1.7 | User profile & account preferences: Livewire UserProfileManager with name/email/phone updating, password changing with current password verification, multi-language switching (English/Sinhala/Tamil), multi-channel notification preference matrix (Email/In-App/SMS/WhatsApp), and audit logging |
 | 2026-11-18 | T-1.8 | Role-tailored dashboard shells for all 7 roles (Admin, Teacher, Parent, Student, Cashier, Printing Staff, Attendance Marshal), central dashboard role dispatcher, station kiosk integrations, and role-based access control |
 | 2026-11-18 | T-1.9 | Admin user management directory: Livewire UserManager at /admin/users with name/email/phone search, status & role filters, suspension modal with mandatory reason, one-click reactivation, deactivation, UserPolicy, UserStatus enum, audit logging & full authorization protection |
+| 2026-11-19 | T-2.1 | Public landing page with dynamic institution branding, admissions/portal status pill, dual-module pillars (Nursery & Tuition), trust metrics, security highlights, and mobile-first responsive design |
 
 ### Blockers and questions
 

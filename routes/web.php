@@ -13,12 +13,15 @@ use App\Livewire\Admin\UserManager;
 use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
 use App\Livewire\Profile\UserProfileManager;
+use App\Models\Institution;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    $institution = current_institution() ?? Institution::first();
+
+    return view('welcome', compact('institution'));
+})->name('home');
 
 Route::get('/offline', function () {
     return view('offline');
