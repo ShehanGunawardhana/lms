@@ -849,7 +849,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 
 ### Phase 1: Authentication, registration and approvals
 
-- [ ] **T-1.1** Fortify: login, logout, password reset, email verification, throttling, role-based redirect to each dashboard. (§5)
+- [x] **T-1.1** Fortify: login, logout, password reset, email verification, throttling, role-based redirect to each dashboard. (§5)
 - [ ] **T-1.2** Enforced two-factor authentication for Admin and Super Admin, with recovery codes. (§14)
 - [ ] **T-1.3** Admin registers a teacher or lecturer. Invite link by email or SMS, teacher sets own password. (§5.1)
 - [ ] **T-1.4** Parent self-registration with parent and child details, consent checkboxes (including photo consent), email or phone verification, status `pending`, "awaiting approval" page. (§5.2)
@@ -1038,6 +1038,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-18 | T-0.12 | Localization (lang/en/portal.php, lang/si/portal.php, SetLocale middleware, locale switcher endpoint) & Timezone helpers (current_timezone, to_institution_tz, to_utc, format_portal_datetime) |
 | 2026-11-18 | T-0.13 | PWA manifest (public/manifest.json), 192/512/maskable icons, service worker (public/sw.js) with cache versioning & offline fallback view (resources/views/offline.blade.php), base layout integration |
 | 2026-11-18 | T-0.14 | GitHub Actions automated CI workflow (.github/workflows/qa.yml) running composer qa on push and PR |
+| 2026-11-18 | T-1.1 | Laravel Fortify full auth stack (login, register, password reset, 2FA challenge, email verify, awaiting-approval views), role-based dashboard redirects, account status validation (blocks suspended/rejected) & feature tests |
 
 ### Blockers and questions
 
