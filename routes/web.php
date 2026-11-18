@@ -10,6 +10,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/offline', function () {
+    return view('offline');
+})->name('offline');
+
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])
     ->name('locale.switch');
 
