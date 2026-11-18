@@ -3,11 +3,15 @@
 namespace App\Services;
 
 use App\Exceptions\FileUploadException;
+use App\Jobs\ScanFileAsset;
 use App\Models\FileAsset;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
+use ZipArchive;
 
 class FileService
 {
@@ -79,13 +83,24 @@ class FileService
             }
         }
 
-        // 4. Calculate SHA-256 Hash
+        // 4. Sanitize Images (strip metadata and re-encode)
+        if ($kind === 'image') {
+            $this->sanitizeImage($realPath, $verifiedExt);
+            $size = (int) filesize($realPath);
+        }
+
+        // 5. Inspect ZIP Archives
+        if ($kind === 'archive') {
+            $this->inspectZip($realPath);
+        }
+
+        // 6. Calculate SHA-256 Hash
         $hash = hash_file('sha256', $realPath);
         if ($hash === false) {
             throw new FileUploadException(__('Failed to compute file integrity hash.'));
         }
 
-        // 5. Store on private disk outside public root
+        // 7. Store on private disk outside public root
         $uuid = (string) Str::uuid();
         $institutionId = current_institution_id() ?? 1;
         $year = date('Y');
@@ -109,7 +124,7 @@ class FileService
             throw new FileUploadException(__('Failed to write file to private storage.'));
         }
 
-        return FileAsset::create([
+        $fileAsset = FileAsset::create([
             'institution_id' => $institutionId,
             'uuid' => $uuid,
             'disk' => $disk,
@@ -124,6 +139,99 @@ class FileService
             'uploaded_by' => $uploader ? $uploader->id : auth()->id(),
             'purpose' => $purpose,
         ]);
+
+        // 8. Queue malware and virus scan
+        ScanFileAsset::dispatch($fileAsset);
+
+        return $fileAsset;
+    }
+
+    /**
+     * Re-encode image and strip EXIF metadata using Intervention Image.
+     */
+    public function sanitizeImage(string $path, string $ext): void
+    {
+        try {
+            $manager = new ImageManager(new Driver);
+            $image = $manager->read($path);
+
+            if (in_array(strtolower($ext), ['jpg', 'jpeg'], true)) {
+                $image->toJpeg(85)->save($path);
+            } elseif (strtolower($ext) === 'png') {
+                $image->toPng()->save($path);
+            }
+        } catch (\Throwable) {
+            throw new FileUploadException(__('The image could not be processed or contains corrupt data.'));
+        }
+    }
+
+    /**
+     * Inspect ZIP archive entries, uncompressed size, and detect forbidden executables.
+     */
+    public function inspectZip(string $path): void
+    {
+        $zip = new ZipArchive;
+        $status = $zip->open($path);
+
+        if ($status !== true) {
+            throw new FileUploadException(__('Unable to open and inspect the ZIP archive.'));
+        }
+
+        $maxEntries = (int) portal_setting('uploads.zip_max_entries', 200);
+        $maxUncompressedMb = (int) portal_setting('uploads.zip_max_uncompressed_mb', 200);
+        $maxUncompressedBytes = $maxUncompressedMb * 1024 * 1024;
+
+        $numFiles = $zip->numFiles;
+        if ($numFiles > $maxEntries) {
+            $zip->close();
+            throw new FileUploadException(
+                __('The ZIP archive contains :count files, which exceeds the limit of :max.', [
+                    'count' => $numFiles,
+                    'max' => $maxEntries,
+                ])
+            );
+        }
+
+        $totalSize = 0;
+        $forbiddenExtensions = [
+            'exe', 'bat', 'cmd', 'sh', 'php', 'phtml', 'pl', 'py', 'js', 'vbs',
+            'ps1', 'jar', 'msi', 'dll', 'com', 'scr', 'cpl', 'htc', 'asp', 'aspx',
+        ];
+
+        for ($i = 0; $i < $numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            if (! $stat) {
+                continue;
+            }
+
+            $name = $stat['name'];
+            $entrySize = $stat['size'];
+
+            // Prevent zip slip / directory traversal
+            if (str_contains($name, '../') || str_contains($name, '..\\')) {
+                $zip->close();
+                throw new FileUploadException(__('The ZIP archive contains insecure relative paths.'));
+            }
+
+            // Check forbidden extensions
+            $entryExt = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            if (in_array($entryExt, $forbiddenExtensions, true)) {
+                $zip->close();
+                throw new FileUploadException(
+                    __('The ZIP archive contains an executable or script (:file) which is forbidden.', ['file' => $name])
+                );
+            }
+
+            $totalSize += $entrySize;
+            if ($totalSize > $maxUncompressedBytes) {
+                $zip->close();
+                throw new FileUploadException(
+                    __('The uncompressed size of the ZIP exceeds the limit of :max MB.', ['max' => $maxUncompressedMb])
+                );
+            }
+        }
+
+        $zip->close();
     }
 
     /**

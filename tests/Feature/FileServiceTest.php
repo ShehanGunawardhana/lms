@@ -41,20 +41,24 @@ test('genuine pdf, image, zip and mp4 files upload with magic byte verification'
     expect($asset->kind)->toBe('document');
     Storage::disk('private')->assertExists($asset->path);
 
-    // 2. Genuine PNG (starts with \x89PNG\r\n\x1a\n)
-    $pngContent = "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A\x00\x00\x00\x0DIHDR\x00\x00\x00\x01";
-    $pngFile = UploadedFile::fake()->createWithContent('diagram.png', $pngContent);
+    // 2. Genuine PNG
+    $pngFile = UploadedFile::fake()->image('diagram.png', 50, 50);
 
     $pngAsset = $service->store($pngFile, 'submission', ['png', 'jpg'], $user);
     expect($pngAsset->mime_verified)->toBe('image/png');
     expect($pngAsset->kind)->toBe('image');
 
-    // 3. Genuine ZIP (starts with PK\x03\x04)
-    $zipContent = "PK\x03\x04\x14\x00\x00\x00\x08\x00";
-    $zipFile = UploadedFile::fake()->createWithContent('archive.zip', $zipContent);
+    // 3. Genuine ZIP
+    $tempZip = tempnam(sys_get_temp_dir(), 'zip');
+    $zip = new ZipArchive;
+    $zip->open($tempZip, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+    $zip->addFromString('readme.txt', 'Hello world');
+    $zip->close();
+    $zipFile = new UploadedFile($tempZip, 'archive.zip', 'application/zip', null, true);
 
     $zipAsset = $service->store($zipFile, 'submission', ['zip'], $user);
     expect($zipAsset->kind)->toBe('archive');
+    @unlink($tempZip);
 });
 
 test('renamed fake file with misleading extension is rejected', function () {
