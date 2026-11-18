@@ -6,6 +6,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PhoneVerificationController;
 use App\Http\Responses\LoginResponse;
 use App\Livewire\Admin\AuditLogViewer;
+use App\Livewire\Admin\NurseryStudentManager;
 use App\Livewire\Admin\ParentApprovalsQueue;
 use App\Livewire\Admin\TeacherInvite;
 use App\Livewire\Auth\AcceptInvitation;
@@ -76,6 +77,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/approvals/parents', ParentApprovalsQueue::class)
         ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
         ->name('admin.approvals.parents');
+
+    // Nursery Students & Guardians Roster (§6.5, T-1.6)
+    Route::get('/admin/nursery/students', NurseryStudentManager::class)
+        ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
+        ->name('admin.nursery.students');
 
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');

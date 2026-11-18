@@ -854,7 +854,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 - [x] **T-1.3** Admin registers a teacher or lecturer. Invite link by email or SMS, teacher sets own password. (§5.1)
 - [x] **T-1.4** Parent self-registration with parent and child details, consent checkboxes (including photo consent), email or phone verification, status `pending`, "awaiting approval" page. (§5.2)
 - [x] **T-1.5** Admin approvals queue for parents: approve or reject with a reason, notifications, audit. (§5.2)
-- [ ] **T-1.6** Nursery `students` and `guardians`: CRUD, `guardian_student` links, several children per parent, admin links parent to child and class. (§6.5)
+- [x] **T-1.6** Nursery `students` and `guardians`: CRUD, `guardian_student` links, several children per parent, admin links parent to child and class. (§6.5)
 - [ ] **T-1.7** User profile, password change, notification preferences, language. 
 - [ ] **T-1.8** Dashboard shells for Admin, Teacher, Parent, Student, Printing Staff, Cashier and Attendance Marshal.
 - [ ] **T-1.9** Admin user management: list, search, filter, suspend, reactivate, deactivate.
@@ -1043,6 +1043,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-18 | T-1.3 | Admin teacher invitation suite: user_invitations & teacher_profiles tables, email/SMS invite dispatch with expiring token, Livewire TeacherInvite manager with resend/revoke, and AcceptInvitation password activation flow |
 | 2026-11-18 | T-1.4 | Parent self-registration suite: parent_profiles & child_registrations tables, child details capture with encrypted medical notes, statutory & photo release consents, SMS OTP & email verification triggers, and dynamic awaiting-approval view |
 | 2026-11-18 | T-1.5 | Admin parent approvals queue: Livewire ParentApprovalsQueue with pending/active/rejected filtering, one-click approve, mandatory-reason rejection modal, ParentApproval/Rejection notifications, and audit logging |
+| 2026-11-18 | T-1.6 | Nursery students & guardians roster: guardians, students, guardian_student, school_classes, enrollments tables & models, Livewire NurseryStudentManager with student CRUD, multi-guardian & multi-child linking, classroom group enrollment, and approval queue integration |
 
 ### Blockers and questions
 

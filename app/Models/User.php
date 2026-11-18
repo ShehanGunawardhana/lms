@@ -123,6 +123,30 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasOne<Guardian, $this>
+     */
+    public function guardian(): HasOne
+    {
+        return $this->hasOne(Guardian::class);
+    }
+
+    /**
+     * @return HasOne<Student, $this>
+     */
+    public function student(): HasOne
+    {
+        return $this->hasOne(Student::class);
+    }
+
+    /**
+     * @return HasMany<SchoolClass, $this>
+     */
+    public function taughtClasses(): HasMany
+    {
+        return $this->hasMany(SchoolClass::class, 'teacher_id');
+    }
+
+    /**
      * @return HasMany<NotificationPreference, $this>
      */
     public function notificationPreferences(): HasMany

@@ -3,7 +3,11 @@
 namespace App\Livewire\Admin;
 
 use App\Contracts\SmsChannelInterface;
+use App\Enums\StudentKind;
+use App\Enums\StudentStatus;
+use App\Models\Guardian;
 use App\Models\ParentProfile;
+use App\Models\Student;
 use App\Notifications\ParentApprovalNotification;
 use App\Notifications\ParentRejectionNotification;
 use Illuminate\Contracts\View\View;
@@ -62,6 +66,40 @@ class ParentApprovalsQueue extends Component
             'reviewed_at' => now(),
             'rejection_reason' => null,
         ]);
+
+        // Create or link Guardian and Student records (§6.5, T-1.6)
+        $guardian = Guardian::firstOrCreate(
+            [
+                'institution_id' => $institutionId,
+                'user_id' => $user->id,
+            ],
+            [
+                'relationship' => $profile->relationship,
+            ]
+        );
+
+        foreach ($profile->children as $childReg) {
+            $student = Student::create([
+                'institution_id' => $institutionId,
+                'student_code' => Student::generateStudentCode($institutionId, 'NUR'),
+                'first_name' => $childReg->first_name,
+                'last_name' => $childReg->last_name,
+                'dob' => $childReg->dob,
+                'gender' => $childReg->gender,
+                'status' => StudentStatus::Active,
+                'kind' => StudentKind::Nursery,
+                'registered_by' => auth()->id(),
+                'registered_at' => now(),
+            ]);
+
+            $guardian->students()->syncWithoutDetaching([
+                $student->id => [
+                    'institution_id' => $institutionId,
+                    'relationship' => $profile->relationship,
+                    'is_primary' => true,
+                ],
+            ]);
+        }
 
         // Send notifications (§5.2, §12)
         $user->notify(new ParentApprovalNotification($profile));
