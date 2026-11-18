@@ -5,6 +5,7 @@ use App\Http\Controllers\FileDownloadController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Responses\LoginResponse;
 use App\Livewire\Admin\AuditLogViewer;
+use App\Livewire\Auth\TwoFactorSetup;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -25,6 +26,10 @@ Route::middleware(['auth'])->group(function () {
         return view('auth.awaiting-approval');
     })->name('awaiting-approval');
 
+    // Two-Factor Authentication Management
+    Route::get('/user/two-factor-setup', TwoFactorSetup::class)
+        ->name('two-factor.setup');
+
     // Central Dashboard Redirect (routes user to their specific dashboard based on role)
     Route::get('/dashboard', function () {
         $user = auth()->user();
@@ -38,7 +43,7 @@ Route::middleware(['auth'])->group(function () {
     // Role-specific Dashboards
     Route::get('/admin/dashboard', function () {
         return view('dashboards.admin');
-    })->middleware('role:super_admin|admin')->name('admin.dashboard');
+    })->middleware(['role:super_admin|admin', 'two_factor.enforce'])->name('admin.dashboard');
 
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');
@@ -75,6 +80,6 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin Tools
     Route::get('/admin/audit', AuditLogViewer::class)
-        ->middleware('permission:audit.view')
+        ->middleware(['permission:audit.view', 'two_factor.enforce'])
         ->name('admin.audit');
 });

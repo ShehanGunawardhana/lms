@@ -45,7 +45,11 @@ test('unauthorized user gets 403 on audit viewer', function () {
 });
 
 test('authorized admin can access audit viewer and livewire filters events', function () {
-    $admin = User::factory()->create(['status' => 'active']);
+    $admin = User::factory()->create([
+        'status' => 'active',
+        'two_factor_secret' => encrypt('JBSWY3DPEHPK3PXP'),
+        'two_factor_confirmed_at' => now(),
+    ]);
     $admin->assignRole(RoleName::Admin->value);
 
     // Create sample audit entries
