@@ -4,9 +4,11 @@ namespace App\Models;
 
 use App\Support\Traits\BelongsToInstitution;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -22,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Carbon|null $published_at
  * @property-read User $user
  * @property-read FileAsset|null $photo
+ * @property-read Collection<int, SchoolClass> $classes
  */
 class TeacherProfile extends Model
 {
@@ -67,6 +70,14 @@ class TeacherProfile extends Model
     public function photo(): BelongsTo
     {
         return $this->belongsTo(FileAsset::class, 'photo_file_id');
+    }
+
+    /**
+     * @return HasMany<SchoolClass, $this>
+     */
+    public function classes(): HasMany
+    {
+        return $this->hasMany(SchoolClass::class, 'teacher_id', 'user_id');
     }
 
     public function isPublished(): bool

@@ -14,6 +14,9 @@ use App\Livewire\Admin\UserManager;
 use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
 use App\Livewire\Profile\UserProfileManager;
+use App\Livewire\Public\ClassCatalog;
+use App\Livewire\Public\LecturerDirectory;
+use App\Livewire\Public\LecturerPortfolioPage;
 use App\Livewire\Teacher\PortfolioEditor;
 use App\Models\Institution;
 use App\Models\User;
@@ -35,6 +38,11 @@ Route::get('/locale/{locale}', [LocaleController::class, 'switch'])
 // Teacher / User Invitation Acceptance
 Route::get('/invitation/{token}', AcceptInvitation::class)
     ->name('invitation.accept');
+
+// Public Faculty Directory & Class Listings (§5.5, T-2.4)
+Route::get('/lecturers', LecturerDirectory::class)->name('public.lecturers');
+Route::get('/lecturers/{id}', LecturerPortfolioPage::class)->name('public.lecturers.show');
+Route::get('/classes', ClassCatalog::class)->name('public.classes');
 
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
