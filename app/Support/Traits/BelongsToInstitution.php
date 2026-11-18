@@ -28,6 +28,8 @@ trait BelongsToInstitution
 
     /**
      * Relationship to the institution.
+     *
+     * @return BelongsTo<Institution, $this>
      */
     public function institution(): BelongsTo
     {

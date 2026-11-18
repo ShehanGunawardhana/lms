@@ -6,6 +6,10 @@
                 <p class="text-xs text-slate-500 mt-1">{{ __('Manage campus academics, users, finance and operations') }}</p>
             </div>
             <div class="flex items-center gap-2">
+                <a href="{{ route('admin.teachers.invite') }}" class="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-xs transition-colors inline-flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    {{ __('Invite Faculty') }}
+                </a>
                 <a href="{{ route('admin.audit') }}" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 shadow-xs transition-colors">
                     {{ __('View Audit Log') }}
                 </a>

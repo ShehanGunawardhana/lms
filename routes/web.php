@@ -5,6 +5,8 @@ use App\Http\Controllers\FileDownloadController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Responses\LoginResponse;
 use App\Livewire\Admin\AuditLogViewer;
+use App\Livewire\Admin\TeacherInvite;
+use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +20,10 @@ Route::get('/offline', function () {
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])
     ->name('locale.switch');
+
+// Teacher / User Invitation Acceptance
+Route::get('/invitation/{token}', AcceptInvitation::class)
+    ->name('invitation.accept');
 
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
@@ -44,6 +50,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/dashboard', function () {
         return view('dashboards.admin');
     })->middleware(['role:super_admin|admin', 'two_factor.enforce'])->name('admin.dashboard');
+
+    // Faculty & User Management
+    Route::get('/admin/teachers/invite', TeacherInvite::class)
+        ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
+        ->name('admin.teachers.invite');
 
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');

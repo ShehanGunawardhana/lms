@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -80,6 +81,27 @@ class User extends Authenticatable
     public function isSuspended(): bool
     {
         return $this->status === 'suspended';
+    }
+
+    public function isInvited(): bool
+    {
+        return $this->status === 'invited';
+    }
+
+    /**
+     * @return HasMany<UserInvitation, $this>
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(UserInvitation::class);
+    }
+
+    /**
+     * @return HasOne<TeacherProfile, $this>
+     */
+    public function teacherProfile(): HasOne
+    {
+        return $this->hasOne(TeacherProfile::class);
     }
 
     /**

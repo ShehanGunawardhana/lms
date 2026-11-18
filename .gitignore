@@ -28,3 +28,4 @@ Thumbs.db
 /database/*.sqlite-journal
 /storage/app/private/*
 !/storage/app/private/.gitignore
+*.docx
