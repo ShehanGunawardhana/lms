@@ -6,6 +6,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PhoneVerificationController;
 use App\Http\Responses\LoginResponse;
 use App\Livewire\Admin\AuditLogViewer;
+use App\Livewire\Admin\ParentApprovalsQueue;
 use App\Livewire\Admin\TeacherInvite;
 use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
@@ -70,6 +71,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/teachers/invite', TeacherInvite::class)
         ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
         ->name('admin.teachers.invite');
+
+    // Parent Approvals Queue (§5.2)
+    Route::get('/admin/approvals/parents', ParentApprovalsQueue::class)
+        ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
+        ->name('admin.approvals.parents');
 
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');
