@@ -63,6 +63,12 @@ class FortifyServiceProvider extends ServiceProvider
                     ]);
                 }
 
+                if ($user->isDeactivated()) {
+                    throw ValidationException::withMessages([
+                        Fortify::username() => [__('This account has been deactivated. Please contact the institution administration.')],
+                    ]);
+                }
+
                 if ($user->status === 'rejected') {
                     throw ValidationException::withMessages([
                         Fortify::username() => [__('This account registration was rejected by administration.')],

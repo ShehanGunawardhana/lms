@@ -19,8 +19,8 @@ abstract class BasePolicy
             return true;
         }
 
-        // Suspended users can never perform any actions
-        if ($user->isSuspended()) {
+        // Suspended or deactivated users can never perform any actions
+        if ($user->isSuspended() || $user->isDeactivated()) {
             return false;
         }
 

@@ -9,6 +9,7 @@ use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\NurseryStudentManager;
 use App\Livewire\Admin\ParentApprovalsQueue;
 use App\Livewire\Admin\TeacherInvite;
+use App\Livewire\Admin\UserManager;
 use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
 use App\Livewire\Profile\UserProfileManager;
@@ -87,6 +88,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/nursery/students', NurseryStudentManager::class)
         ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
         ->name('admin.nursery.students');
+
+    // Admin User Directory (§4, §13, T-1.9)
+    Route::get('/admin/users', UserManager::class)
+        ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
+        ->name('admin.users');
 
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');

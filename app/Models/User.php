@@ -98,6 +98,11 @@ class User extends Authenticatable
         return $this->status === 'rejected';
     }
 
+    public function isDeactivated(): bool
+    {
+        return $this->status === 'deactivated';
+    }
+
     /**
      * @return HasMany<UserInvitation, $this>
      */
