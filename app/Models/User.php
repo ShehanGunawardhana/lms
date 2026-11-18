@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -79,5 +80,48 @@ class User extends Authenticatable
     public function isSuspended(): bool
     {
         return $this->status === 'suspended';
+    }
+
+    /**
+     * @return HasMany<NotificationPreference, $this>
+     */
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
+    /**
+     * Determine if the user has opted in (or defaults in) to a notification event on a channel.
+     */
+    public function wantsNotification(string $eventType, string $channel): bool
+    {
+        $pref = $this->notificationPreferences()
+            ->where('event_type', $eventType)
+            ->where('channel', $channel)
+            ->first();
+
+        if ($pref !== null) {
+            return (bool) $pref->is_enabled;
+        }
+
+        // Default to true for standard channels unless configured otherwise
+        return true;
+    }
+
+    /**
+     * Save or update a notification preference for the user.
+     */
+    public function setNotificationPreference(string $eventType, string $channel, bool $enabled): void
+    {
+        $this->notificationPreferences()->updateOrCreate(
+            [
+                'event_type' => $eventType,
+                'channel' => $channel,
+            ],
+            [
+                'institution_id' => $this->institution_id ?? 1,
+                'is_enabled' => $enabled,
+            ]
+        );
     }
 }
