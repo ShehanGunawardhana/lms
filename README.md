@@ -863,7 +863,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 
 - [x] **T-2.1** Public landing page using institution branding.
 - [x] **T-2.2** Lecturer portfolio editor (photo, biography, qualifications, subjects, sample materials) with `draft → pending → published`. (§5.5)
-- [ ] **T-2.3** Admin portfolio review and publish.
+- [x] **T-2.3** Admin portfolio review and publish.
 - [ ] **T-2.4** Public lecturer directory, portfolio page, and class listing with schedule, fee and an **Apply** button (wired in T-7.1).
 
 ### Phase 3: Academics core
@@ -1049,6 +1049,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-18 | T-1.9 | Admin user management directory: Livewire UserManager at /admin/users with name/email/phone search, status & role filters, suspension modal with mandatory reason, one-click reactivation, deactivation, UserPolicy, UserStatus enum, audit logging & full authorization protection |
 | 2026-11-19 | T-2.1 | Public landing page with dynamic institution branding, admissions/portal status pill, dual-module pillars (Nursery & Tuition), trust metrics, security highlights, and mobile-first responsive design |
 | 2026-11-19 | T-2.2 | Lecturer portfolio editor suite: Livewire PortfolioEditor at /teacher/portfolio with photo upload via FileService, headline, bio, qualifications, subjects tag input, dynamic sample learning materials repeater (§5.5), draft/pending/published workflow transitions, TeacherProfilePolicy, and audit logging |
+| 2026-11-19 | T-2.3 | Admin portfolio review and publish queue: Livewire PortfolioReviewQueue at /admin/portfolios with status tabs (pending/published/rejected/all), full-profile inspection modal, one-click publish, mandatory-feedback revision request, unpublish, notifications (mail/db), and audit logging |
 
 ### Blockers and questions
 

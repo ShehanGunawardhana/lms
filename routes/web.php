@@ -8,6 +8,7 @@ use App\Http\Responses\LoginResponse;
 use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\NurseryStudentManager;
 use App\Livewire\Admin\ParentApprovalsQueue;
+use App\Livewire\Admin\PortfolioReviewQueue;
 use App\Livewire\Admin\TeacherInvite;
 use App\Livewire\Admin\UserManager;
 use App\Livewire\Auth\AcceptInvitation;
@@ -97,6 +98,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/users', UserManager::class)
         ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
         ->name('admin.users');
+
+    // Lecturer Portfolio Approval Queue (§5.5, T-2.3)
+    Route::get('/admin/portfolios', PortfolioReviewQueue::class)
+        ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
+        ->name('admin.portfolios');
 
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');
