@@ -39,8 +39,8 @@
 
     <!-- Nursery Section (Module Toggled) -->
     @if (config('portal.modules.nursery', true))
-        <a href="{{ Route::has('activities.index') ? route('activities.index') : url('/activities') }}" class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 {{ request()->is('activities*') ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30' : 'text-slate-300 hover:text-white hover:bg-slate-800' }}">
-            <svg class="mr-3 shrink-0 h-5 w-5 {{ request()->is('activities*') ? 'text-white' : 'text-amber-400 group-hover:text-amber-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="{{ Route::has('teacher.activities') ? route('teacher.activities') : (Route::has('activities.index') ? route('activities.index') : url('/activities')) }}" class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 {{ (request()->is('activities*') || request()->is('teacher/activities*')) ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30' : 'text-slate-300 hover:text-white hover:bg-slate-800' }}">
+            <svg class="mr-3 shrink-0 h-5 w-5 {{ (request()->is('activities*') || request()->is('teacher/activities*')) ? 'text-white' : 'text-amber-400 group-hover:text-amber-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <span>{{ __('Nursery Activities') }}</span>

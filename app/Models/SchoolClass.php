@@ -126,6 +126,14 @@ class SchoolClass extends Model
         return $this->hasMany(ClassSession::class, 'class_id')->orderBy('date')->orderBy('starts_at');
     }
 
+    /**
+     * @return HasMany<Activity, $this>
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(Activity::class, 'class_id')->orderByDesc('created_at');
+    }
+
     public function availableSeats(): int
     {
         $activeCount = $this->enrollments()->where('status', 'active')->count();

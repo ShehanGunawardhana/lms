@@ -22,6 +22,7 @@ use App\Livewire\Profile\UserProfileManager;
 use App\Livewire\Public\ClassCatalog;
 use App\Livewire\Public\LecturerDirectory;
 use App\Livewire\Public\LecturerPortfolioPage;
+use App\Livewire\Teacher\ActivityManager;
 use App\Livewire\Teacher\PortfolioEditor;
 use App\Livewire\Teacher\TeacherDashboard;
 use App\Models\Institution;
@@ -147,6 +148,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/teacher/dashboard', TeacherDashboard::class)
         ->middleware('role:teacher')
         ->name('teacher.dashboard');
+
+    // Nursery Module Activities Manager (§6.1, T-4.1)
+    Route::get('/teacher/activities', ActivityManager::class)
+        ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
+        ->name('teacher.activities');
+
+    Route::get('/activities', ActivityManager::class)
+        ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
+        ->name('activities.index');
 
     // Lecturer Portfolio Editor (§5.5, T-2.2)
     Route::get('/teacher/portfolio', PortfolioEditor::class)

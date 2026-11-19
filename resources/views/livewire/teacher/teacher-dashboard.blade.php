@@ -19,6 +19,14 @@
         </div>
 
         <div class="flex items-center gap-3">
+            @if (config('portal.modules.nursery', true))
+                <a 
+                    href="{{ route('teacher.activities') }}"
+                    class="px-4 py-2.5 rounded-xl text-xs font-bold text-amber-950 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-[0.98] shadow-sm shadow-amber-500/20 transition-all cursor-pointer inline-flex items-center gap-2">
+                    <span>🧸</span>
+                    {{ __('Nursery Activities') }}
+                </a>
+            @endif
             <a 
                 href="{{ route('teacher.portfolio') }}"
                 class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 active:scale-[0.98] shadow-md shadow-brand-500/20 transition-all cursor-pointer inline-flex items-center gap-2 btn-interactive">
