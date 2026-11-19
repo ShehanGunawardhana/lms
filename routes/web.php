@@ -7,6 +7,7 @@ use App\Http\Controllers\PhoneVerificationController;
 use App\Http\Responses\LoginResponse;
 use App\Livewire\Admin\AcademicStructureManager;
 use App\Livewire\Admin\AuditLogViewer;
+use App\Livewire\Admin\ClassEnrollmentManager;
 use App\Livewire\Admin\ClassManager;
 use App\Livewire\Admin\ClassScheduleManager;
 use App\Livewire\Admin\NurseryStudentManager;
@@ -129,6 +130,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/classes/{classId}/schedule', ClassScheduleManager::class)
         ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
         ->name('admin.classes.schedule');
+
+    // Class Student Enrollments & Roster (§7.1, T-3.5)
+    Route::get('/admin/classes/{classId}/enrollments', ClassEnrollmentManager::class)
+        ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
+        ->name('admin.classes.enrollments');
 
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');
