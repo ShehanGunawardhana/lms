@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property int $institution_id
  * @property int|null $academic_year_id
+ * @property int|null $batch_id
  * @property int|null $teacher_id
  * @property string $title
  * @property string|null $subject
@@ -27,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $status
  * @property-read User|null $teacher
  * @property-read Institution|null $institution
+ * @property-read AcademicYear|null $academicYear
+ * @property-read Batch|null $batch
  * @property-read Collection<int, Student> $students
  * @property-read Collection<int, Enrollment> $enrollments
  */
@@ -38,6 +41,7 @@ class SchoolClass extends Model
     protected $fillable = [
         'institution_id',
         'academic_year_id',
+        'batch_id',
         'teacher_id',
         'title',
         'subject',
@@ -68,6 +72,22 @@ class SchoolClass extends Model
     public function teacher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    /**
+     * @return BelongsTo<AcademicYear, $this>
+     */
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
+    }
+
+    /**
+     * @return BelongsTo<Batch, $this>
+     */
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(Batch::class, 'batch_id');
     }
 
     /**

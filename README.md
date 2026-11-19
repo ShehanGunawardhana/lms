@@ -868,7 +868,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 
 ### Phase 3: Academics core
 
-- [ ] **T-3.1** Academic years, terms and batches or groups. (§7.1)
+- [x] **T-3.1** Academic years, terms and batches or groups. (§7.1)
 - [ ] **T-3.2** Classes CRUD for `nursery_group` and `institute_class` (fee, capacity, room or online link, lecturer). 
 - [ ] **T-3.3** Weekly schedules and `ScheduleGenerator` that creates dated sessions; safe regeneration that never deletes sessions with data.
 - [ ] **T-3.4** Holidays, per-session cancellation and rescheduling with reason and notifications.
@@ -1051,6 +1051,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-19 | T-2.2 | Lecturer portfolio editor suite: Livewire PortfolioEditor at /teacher/portfolio with photo upload via FileService, headline, bio, qualifications, subjects tag input, dynamic sample learning materials repeater (§5.5), draft/pending/published workflow transitions, TeacherProfilePolicy, and audit logging |
 | 2026-11-19 | T-2.3 | Admin portfolio review and publish queue: Livewire PortfolioReviewQueue at /admin/portfolios with status tabs (pending/published/rejected/all), full-profile inspection modal, one-click publish, mandatory-feedback revision request, unpublish, notifications (mail/db), and audit logging |
 | 2026-11-19 | T-2.4 | Public faculty directory (/lecturers), lecturer portfolio view (/lecturers/{id}), and public class catalog (/classes) with subject/day/search filters, schedules, pricing in LKR, class application modal, and audit logging |
+| 2026-11-19 | T-3.1 | Academic years, terms, and batches/groups management suite (§7.1): AcademicYear, Term, and Batch models/migrations, AcademicStructureManager Livewire component at /admin/academics with tabs, status transitions, current-year/term indicators, validation, audit logging & feature tests |
 
 ### Blockers and questions
 

@@ -12,6 +12,15 @@
         <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ __('Academics') }}</p>
     </div>
 
+    @hasanyrole('super_admin|admin')
+        <a href="{{ route('admin.academics') }}" class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 {{ request()->is('admin/academics*') ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30 font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-800' }}">
+            <svg class="mr-3 shrink-0 h-5 w-5 {{ request()->is('admin/academics*') ? 'text-white' : 'text-slate-400 group-hover:text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span>{{ __('Years, Terms & Batches') }}</span>
+        </a>
+    @endhasanyrole
+
     <a href="{{ Route::has('classes.index') ? route('classes.index') : url('/classes') }}" class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 {{ request()->is('classes*') ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30' : 'text-slate-300 hover:text-white hover:bg-slate-800' }}">
         <svg class="mr-3 shrink-0 h-5 w-5 {{ request()->is('classes*') ? 'text-white' : 'text-slate-400 group-hover:text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>

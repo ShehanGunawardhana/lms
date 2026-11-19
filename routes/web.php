@@ -5,6 +5,7 @@ use App\Http\Controllers\FileDownloadController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PhoneVerificationController;
 use App\Http\Responses\LoginResponse;
+use App\Livewire\Admin\AcademicStructureManager;
 use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\NurseryStudentManager;
 use App\Livewire\Admin\ParentApprovalsQueue;
@@ -111,6 +112,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/portfolios', PortfolioReviewQueue::class)
         ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
         ->name('admin.portfolios');
+
+    // Academic Structure: Years, Terms & Batches (§7.1, T-3.1)
+    Route::get('/admin/academics', AcademicStructureManager::class)
+        ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
+        ->name('admin.academics');
 
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');
