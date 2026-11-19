@@ -132,4 +132,40 @@ class TwoFactorEnforcementTest extends TestCase
         $admin->refresh();
         expect($admin->two_factor_secret)->not->toBeNull();
     }
+
+    public function test_dev_bypass_code_000000_confirms_two_factor_in_local_testing(): void
+    {
+        $admin = User::factory()->create([
+            'institution_id' => $this->institution->id,
+            'status' => 'active',
+        ]);
+        $admin->assignRole(RoleName::Admin->value);
+
+        $this->actingAs($admin);
+
+        Livewire::test(TwoFactorSetup::class)
+            ->call('enable')
+            ->set('code', '000000')
+            ->call('confirm')
+            ->assertHasNoErrors()
+            ->assertSet('showingRecoveryCodes', true);
+
+        expect($admin->fresh()->two_factor_confirmed_at)->not->toBeNull();
+    }
+
+    public function test_artisan_2fa_confirm_command_confirms_admin(): void
+    {
+        $admin = User::factory()->create([
+            'institution_id' => $this->institution->id,
+            'email' => 'customadmin@portal.local',
+            'status' => 'active',
+            'two_factor_confirmed_at' => null,
+        ]);
+        $admin->assignRole(RoleName::Admin->value);
+
+        $this->artisan('2fa:confirm customadmin@portal.local')
+            ->assertSuccessful();
+
+        expect($admin->fresh()->two_factor_confirmed_at)->not->toBeNull();
+    }
 }

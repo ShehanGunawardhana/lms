@@ -132,6 +132,22 @@ class TwoFactorSetup extends Component
         }
     }
 
+    public function getSetupKeyProperty(): string
+    {
+        /** @var User $user */
+        $user = auth()->user();
+
+        if (empty($user->two_factor_secret)) {
+            return '';
+        }
+
+        try {
+            return (string) decrypt($user->two_factor_secret);
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
     public function render(): View
     {
         return view('livewire.auth.two-factor-setup');

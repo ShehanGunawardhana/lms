@@ -68,6 +68,38 @@
                     {!! $this->qrCodeSvg !!}
                 </div>
 
+                @if ($this->setupKey)
+                    <div class="max-w-md mx-auto p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-center space-y-1.5" x-data="{ copied: false }">
+                        <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{{ __('Or Enter Secret Key Manually') }}</div>
+                        <div class="flex items-center justify-center gap-2">
+                            <code class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 font-mono text-xs font-bold text-slate-800 tracking-wider select-all">{{ $this->setupKey }}</code>
+                            <button 
+                                type="button" 
+                                @click="navigator.clipboard.writeText('{{ $this->setupKey }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors">
+                                <span x-show="!copied">{{ __('Copy') }}</span>
+                                <span x-show="copied" x-cloak class="text-emerald-700">✓ {{ __('Copied!') }}</span>
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-400">{{ __('Use this manual code in Google Authenticator or Microsoft Authenticator if Samsung Pass intercepts your camera.') }}</p>
+                    </div>
+                @endif
+
+                @if (app()->environment('local', 'testing'))
+                    <div class="max-w-md mx-auto p-3.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-md bg-purple-200 text-purple-900 font-extrabold text-[10px]">DEV MODE</span>
+                            <span>{{ __('Dev code:') }} <code class="font-mono font-bold bg-white px-1.5 py-0.5 rounded-sm border border-purple-200">000000</code></span>
+                        </div>
+                        <button 
+                            type="button" 
+                            wire:click="$set('code', '000000')" 
+                            class="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] transition-colors">
+                            {{ __('Fill Code') }}
+                        </button>
+                    </div>
+                @endif
+
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-3">
                     <span class="font-bold text-slate-800 text-sm block">{{ __('Step 2: Enter Verification Code') }}</span>
                     <p>{{ __('Enter the 6-digit confirmation code shown in your authenticator app to verify setup.') }}</p>

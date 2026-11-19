@@ -19,6 +19,20 @@
                 autocomplete="one-time-code" 
                 inputmode="numeric" 
             />
+            @if (app()->environment('local', 'testing'))
+                <div class="mt-2 p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="px-1.5 py-0.5 rounded-md bg-purple-200 text-purple-900 font-extrabold text-[10px]">DEV MODE</span>
+                        <span>{{ __('Dev bypass code:') }} <code class="font-mono font-bold bg-white px-1.5 py-0.5 rounded-sm border border-purple-200">000000</code></span>
+                    </div>
+                    <button 
+                        type="button" 
+                        @click="$el.closest('form').querySelector('input[name=code]').value = '000000'"
+                        class="text-purple-700 font-bold hover:underline text-[11px]">
+                        {{ __('Fill 000000') }}
+                    </button>
+                </div>
+            @endif
         </div>
 
         <div x-show="recovery" x-cloak>
