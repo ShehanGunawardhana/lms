@@ -4,6 +4,8 @@ namespace App\Livewire\Admin;
 
 use App\Models\AcademicYear;
 use App\Models\Batch;
+use App\Models\ClassSession;
+use App\Models\Holiday;
 use App\Models\Term;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -83,6 +85,27 @@ class AcademicStructureManager extends Component
 
     public string $batchDescription = '';
 
+    // --- Holidays State ---
+    public string $holidaySearch = '';
+
+    public string $holidayAffectsFilter = 'all';
+
+    public bool $showHolidayModal = false;
+
+    public ?int $editingHolidayId = null;
+
+    public string $holidayName = '';
+
+    public string $holidayDate = '';
+
+    public string $holidayAffects = 'all';
+
+    public bool $holidayIsRecurring = false;
+
+    public string $holidayDescription = '';
+
+    public bool $applyToExistingSessions = true;
+
     public function mount(): void
     {
         $institutionId = current_institution_id() ?? 1;
@@ -102,7 +125,7 @@ class AcademicStructureManager extends Component
 
     public function setActiveTab(string $tab): void
     {
-        if (in_array($tab, ['years', 'terms', 'batches'], true)) {
+        if (in_array($tab, ['years', 'terms', 'batches', 'holidays'], true)) {
             $this->activeTab = $tab;
             $this->resetPage();
         }
@@ -487,6 +510,129 @@ class AcademicStructureManager extends Component
         session()->flash('success', __("Batch/Group ':name' deleted successfully.", ['name' => $name]));
     }
 
+    // ==========================================
+    // Holidays & Closures Actions (§7.1, T-3.4)
+    // ==========================================
+
+    public function openCreateHolidayModal(): void
+    {
+        $this->resetHolidayFields();
+        $this->showHolidayModal = true;
+    }
+
+    public function openEditHolidayModal(int $id): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $holiday = Holiday::where('institution_id', $institutionId)->findOrFail($id);
+
+        $this->editingHolidayId = $holiday->id;
+        $this->holidayName = $holiday->name;
+        $this->holidayDate = $holiday->date->format('Y-m-d');
+        $this->holidayAffects = $holiday->affects;
+        $this->holidayIsRecurring = $holiday->is_recurring;
+        $this->holidayDescription = $holiday->description ?? '';
+        $this->applyToExistingSessions = false;
+
+        $this->showHolidayModal = true;
+    }
+
+    public function closeHolidayModal(): void
+    {
+        $this->showHolidayModal = false;
+        $this->resetHolidayFields();
+    }
+
+    private function resetHolidayFields(): void
+    {
+        $this->editingHolidayId = null;
+        $this->holidayName = '';
+        $this->holidayDate = now()->format('Y-m-d');
+        $this->holidayAffects = 'all';
+        $this->holidayIsRecurring = false;
+        $this->holidayDescription = '';
+        $this->applyToExistingSessions = true;
+        $this->resetErrorBag();
+    }
+
+    public function saveHoliday(): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+
+        $this->validate([
+            'holidayName' => ['required', 'string', 'min:3', 'max:100'],
+            'holidayDate' => ['required', 'date'],
+            'holidayAffects' => ['required', Rule::in(['all', 'nursery', 'institute'])],
+            'holidayDescription' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        if ($this->editingHolidayId) {
+            $holiday = Holiday::where('institution_id', $institutionId)->findOrFail($this->editingHolidayId);
+            $holiday->update([
+                'name' => trim($this->holidayName),
+                'date' => $this->holidayDate,
+                'affects' => $this->holidayAffects,
+                'is_recurring' => $this->holidayIsRecurring,
+                'description' => trim($this->holidayDescription) ?: null,
+            ]);
+
+            audit('holiday.updated', "Updated holiday {$holiday->name} on {$holiday->date->format('Y-m-d')}", $holiday);
+            session()->flash('success', __("Holiday ':name' updated successfully.", ['name' => $holiday->name]));
+        } else {
+            $holiday = Holiday::create([
+                'institution_id' => $institutionId,
+                'name' => trim($this->holidayName),
+                'date' => $this->holidayDate,
+                'affects' => $this->holidayAffects,
+                'is_recurring' => $this->holidayIsRecurring,
+                'description' => trim($this->holidayDescription) ?: null,
+            ]);
+
+            audit('holiday.created', "Created holiday {$holiday->name} on {$holiday->date->format('Y-m-d')}", $holiday);
+            session()->flash('success', __("Holiday ':name' created successfully.", ['name' => $holiday->name]));
+        }
+
+        // Apply cancellation to existing scheduled sessions on that date if selected
+        if ($this->applyToExistingSessions) {
+            $affectedSessions = ClassSession::where('institution_id', $institutionId)
+                ->whereDate('date', $this->holidayDate)
+                ->where('status', 'scheduled')
+                ->with('schoolClass')
+                ->get();
+
+            $cancelledCount = 0;
+            foreach ($affectedSessions as $sess) {
+                if ($sess->schoolClass && $holiday->affectsClass($sess->schoolClass)) {
+                    $sess->update([
+                        'status' => 'cancelled',
+                        'cancel_reason' => "Holiday: {$holiday->name}",
+                    ]);
+                    $cancelledCount++;
+                }
+            }
+
+            if ($cancelledCount > 0) {
+                session()->flash('success', __("Holiday ':name' saved. Automatically marked :count scheduled sessions as holiday cancellations.", [
+                    'name' => $holiday->name,
+                    'count' => $cancelledCount,
+                ]));
+            }
+        }
+
+        $this->closeHolidayModal();
+    }
+
+    public function deleteHoliday(int $id): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $holiday = Holiday::where('institution_id', $institutionId)->findOrFail($id);
+
+        $name = $holiday->name;
+        $holiday->delete();
+
+        audit('holiday.deleted', "Deleted holiday {$name}");
+        session()->flash('success', __("Holiday ':name' deleted successfully.", ['name' => $name]));
+    }
+
     public function render(): View
     {
         $institutionId = current_institution_id() ?? 1;
@@ -546,11 +692,26 @@ class AcademicStructureManager extends Component
 
         $batches = $batchQuery->orderBy('name')->paginate(10, ['*'], 'batches_page');
 
+        // 4. Holidays Tab Data
+        $holidayQuery = Holiday::where('institution_id', $institutionId);
+
+        if ($this->holidayAffectsFilter !== 'all') {
+            $holidayQuery->where('affects', $this->holidayAffectsFilter);
+        }
+
+        if (! empty(trim($this->holidaySearch))) {
+            $term = '%'.trim($this->holidaySearch).'%';
+            $holidayQuery->where('name', 'like', $term);
+        }
+
+        $holidays = $holidayQuery->orderBy('date')->paginate(10, ['*'], 'holidays_page');
+
         return view('livewire.admin.academic-structure-manager', [
             'allYears' => $allYears,
             'years' => $years,
             'terms' => $terms,
             'batches' => $batches,
+            'holidays' => $holidays,
         ]);
     }
 }

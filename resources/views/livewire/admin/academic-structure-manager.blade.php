@@ -35,13 +35,21 @@
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     {{ __('New Term / Semester') }}
                 </button>
-            @else
+            @elseif ($activeTab === 'batches')
                 <button 
                     type="button" 
                     wire:click="openCreateBatchModal"
                     class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 active:scale-[0.98] shadow-md shadow-brand-500/20 transition-all cursor-pointer inline-flex items-center gap-2 btn-interactive">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     {{ __('New Batch or Group') }}
+                </button>
+            @elseif ($activeTab === 'holidays')
+                <button 
+                    type="button" 
+                    wire:click="openCreateHolidayModal"
+                    class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 active:scale-[0.98] shadow-md shadow-brand-500/20 transition-all cursor-pointer inline-flex items-center gap-2 btn-interactive">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    {{ __('New Holiday / Closure') }}
                 </button>
             @endif
         </div>
@@ -95,6 +103,15 @@
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg>
             {{ __('Batches & Groups') }}
             <span class="ml-1 px-1.5 py-0.5 rounded-md text-[10px] {{ $activeTab === 'batches' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $batches->total() }}</span>
+        </button>
+
+        <button 
+            type="button" 
+            wire:click="setActiveTab('holidays')"
+            class="px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-2 {{ $activeTab === 'holidays' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' }}">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.002A11.959 11.959 0 0 1 12 2.674ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+            {{ __('Holidays & Closures') }}
+            <span class="ml-1 px-1.5 py-0.5 rounded-md text-[10px] {{ $activeTab === 'holidays' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $holidays->total() }}</span>
         </button>
     </div>
 
@@ -519,6 +536,141 @@
     @endif
 
     <!-- ============================================================== -->
+    <!-- TAB 4: HOLIDAYS & CLOSURES -->
+    <!-- ============================================================== -->
+    @if ($activeTab === 'holidays')
+        <div class="space-y-4">
+            <!-- Search & Filters -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <button 
+                        type="button" 
+                        wire:click="$set('holidayAffectsFilter', 'all')"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors {{ $holidayAffectsFilter === 'all' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                        {{ __('All Institutions') }}
+                    </button>
+                    <button 
+                        type="button" 
+                        wire:click="$set('holidayAffectsFilter', 'institute')"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors {{ $holidayAffectsFilter === 'institute' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                        {{ __('Institute Only') }}
+                    </button>
+                    <button 
+                        type="button" 
+                        wire:click="$set('holidayAffectsFilter', 'nursery')"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors {{ $holidayAffectsFilter === 'nursery' ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                        {{ __('Nursery Only') }}
+                    </button>
+                </div>
+
+                <div class="w-full sm:w-72">
+                    <input 
+                        type="text" 
+                        wire:model.live.debounce.300ms="holidaySearch"
+                        placeholder="{{ __('Search holiday by name...') }}"
+                        class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs">
+                </div>
+            </div>
+
+            <!-- Holidays List Card -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                            <tr>
+                                <th class="px-5 py-3.5">{{ __('Holiday / Closure') }}</th>
+                                <th class="px-4 py-3.5">{{ __('Date') }}</th>
+                                <th class="px-4 py-3.5">{{ __('Applies To') }}</th>
+                                <th class="px-4 py-3.5">{{ __('Recurrence') }}</th>
+                                <th class="px-5 py-3.5 text-right">{{ __('Actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700">
+                            @forelse ($holidays as $holiday)
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-5 py-4">
+                                        <div class="font-bold text-slate-900 text-sm">{{ $holiday->name }}</div>
+                                        @if ($holiday->description)
+                                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{{ $holiday->description }}</p>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-slate-900 font-semibold">
+                                        <div class="flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
+                                            <span>{{ $holiday->date->format('M d, Y') }}</span>
+                                            <span class="text-xs text-slate-400 font-normal">({{ $holiday->date->format('l') }})</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        @if ($holiday->affects === 'nursery')
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-700">
+                                                {{ __('Nursery Only') }}
+                                            </span>
+                                        @elseif ($holiday->affects === 'institute')
+                                            <span class="px-2 py-0.5 rounded-md bg-brand-50 border border-brand-200 text-[10px] font-bold text-brand-700">
+                                                {{ __('Institute Only') }}
+                                            </span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-700">
+                                                {{ __('All Institutions') }}
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        @if ($holiday->is_recurring)
+                                            <span class="px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-[10px] font-bold text-purple-700 flex items-center gap-1 w-max">
+                                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+                                                {{ __('Annual') }}
+                                            </span>
+                                        @else
+                                            <span class="text-slate-400 text-xs">{{ __('One-time') }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-5 py-4 text-right">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <button 
+                                                type="button" 
+                                                wire:click="openEditHolidayModal({{ $holiday->id }})"
+                                                class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 transition-colors">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                wire:click="deleteHoliday({{ $holiday->id }})"
+                                                wire:confirm="{{ __('Delete this holiday/closure?') }}"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-5 py-12 text-center">
+                                        <div class="max-w-xs mx-auto space-y-2">
+                                            <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
+                                            </div>
+                                            <p class="font-bold text-slate-800 text-sm">{{ __('No holidays or closures scheduled') }}</p>
+                                            <p class="text-xs text-slate-500">{{ __('Add public holidays, term breaks, or institutional closure days.') }}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                @if ($holidays->hasPages())
+                    <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/50">
+                        {{ $holidays->links() }}
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
+
+    <!-- ============================================================== -->
     <!-- MODAL 1: ACADEMIC YEAR CREATE / EDIT -->
     <!-- ============================================================== -->
     @if ($showYearModal)
@@ -808,6 +960,106 @@
                             wire:loading.attr="disabled"
                             class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 active:scale-[0.98] shadow-md shadow-brand-500/20 transition-all btn-interactive">
                             {{ $editingBatchId ? __('Update Batch/Group') : __('Save Batch/Group') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- ============================================================== -->
+    <!-- MODAL 4: HOLIDAY CREATE / EDIT -->
+    <!-- ============================================================== -->
+    @if ($showHolidayModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+                    <h3 class="text-lg font-extrabold text-slate-900">
+                        {{ $editingHolidayId ? __('Edit Holiday / Closure') : __('New Holiday / Closure') }}
+                    </h3>
+                    <button type="button" wire:click="closeHolidayModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
+                </div>
+
+                <form wire:submit="saveHoliday" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Holiday Name') }} <span class="text-rose-500">*</span></label>
+                        <input 
+                            type="text" 
+                            wire:model="holidayName"
+                            placeholder="e.g. Sinhala & Tamil New Year or Full Moon Poya Day"
+                            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                        @error('holidayName') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Date') }} <span class="text-rose-500">*</span></label>
+                            <input 
+                                type="date" 
+                                wire:model="holidayDate"
+                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                            @error('holidayDate') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Applies To') }} <span class="text-rose-500">*</span></label>
+                            <select 
+                                wire:model="holidayAffects"
+                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                                <option value="all">{{ __('All (Institute + Nursery)') }}</option>
+                                <option value="institute">{{ __('Institute Only') }}</option>
+                                <option value="nursery">{{ __('Nursery Only') }}</option>
+                            </select>
+                            @error('holidayAffects') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Description') }}</label>
+                        <textarea 
+                            wire:model="holidayDescription"
+                            rows="2"
+                            placeholder="{{ __('Optional description / notes...') }}"
+                            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs"></textarea>
+                        @error('holidayDescription') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="space-y-2 pt-1">
+                        <div class="flex items-center gap-2">
+                            <input 
+                                type="checkbox" 
+                                id="holidayIsRecurring"
+                                wire:model="holidayIsRecurring"
+                                class="rounded-md border-slate-300 text-brand-600 focus:ring-brand-500/20">
+                            <label for="holidayIsRecurring" class="text-xs font-semibold text-slate-700 cursor-pointer">
+                                {{ __('Annual recurring holiday (same date every year)') }}
+                            </label>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <input 
+                                type="checkbox" 
+                                id="applyToExistingSessions"
+                                wire:model="applyToExistingSessions"
+                                class="rounded-md border-slate-300 text-brand-600 focus:ring-brand-500/20">
+                            <label for="applyToExistingSessions" class="text-xs font-semibold text-slate-700 cursor-pointer">
+                                {{ __('Automatically cancel scheduled class sessions falling on this date') }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                        <button 
+                            type="button" 
+                            wire:click="closeHolidayModal"
+                            class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button 
+                            type="submit"
+                            wire:loading.attr="disabled"
+                            class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 active:scale-[0.98] shadow-md shadow-brand-500/20 transition-all btn-interactive">
+                            {{ $editingHolidayId ? __('Update Holiday') : __('Save Holiday') }}
                         </button>
                     </div>
                 </form>

@@ -5,6 +5,8 @@ namespace App\Livewire\Admin;
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
 use App\Models\SchoolClass;
+use App\Notifications\SessionCancelledNotification;
+use App\Notifications\SessionRescheduledNotification;
 use App\Services\ScheduleGenerator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -49,6 +51,21 @@ class ClassScheduleManager extends Component
     public ?int $cancellingSessionId = null;
 
     public string $cancelReason = '';
+
+    // Reschedule Session Modal
+    public bool $showRescheduleModal = false;
+
+    public ?int $reschedulingSessionId = null;
+
+    public string $rescheduleDate = '';
+
+    public string $rescheduleStartsAt = '08:30';
+
+    public string $rescheduleEndsAt = '11:30';
+
+    public string $rescheduleRoom = '';
+
+    public string $rescheduleReason = '';
 
     // Session Status Filter
     public string $sessionStatusFilter = 'all';
@@ -262,10 +279,169 @@ class ClassScheduleManager extends Component
             'cancel_reason' => trim($this->cancelReason),
         ]);
 
+        $this->notifyCancellation($session, trim($this->cancelReason));
+
         audit('session.cancelled', "Cancelled session on {$session->date->format('Y-m-d')}: {$this->cancelReason}", $session);
 
         $this->closeCancelModal();
-        session()->flash('success', __('Session cancelled successfully.'));
+        session()->flash('success', __('Session cancelled successfully and affected students/parents notified.'));
+    }
+
+    public function openRescheduleModal(int $sessionId): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $session = ClassSession::where('institution_id', $institutionId)
+            ->where('class_id', $this->classId)
+            ->findOrFail($sessionId);
+
+        $this->reschedulingSessionId = $session->id;
+        $this->rescheduleDate = $session->date->addWeek()->format('Y-m-d');
+        $this->rescheduleStartsAt = substr((string) $session->starts_at, 0, 5);
+        $this->rescheduleEndsAt = substr((string) $session->ends_at, 0, 5);
+        $this->rescheduleRoom = $session->room ?? '';
+        $this->rescheduleReason = '';
+        $this->showRescheduleModal = true;
+    }
+
+    public function closeRescheduleModal(): void
+    {
+        $this->reschedulingSessionId = null;
+        $this->rescheduleReason = '';
+        $this->showRescheduleModal = false;
+        $this->resetErrorBag();
+    }
+
+    public function rescheduleSession(): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+
+        $this->validate([
+            'rescheduleDate' => ['required', 'date'],
+            'rescheduleStartsAt' => ['required', 'date_format:H:i'],
+            'rescheduleEndsAt' => ['required', 'date_format:H:i', 'after:rescheduleStartsAt'],
+            'rescheduleRoom' => ['nullable', 'string', 'max:100'],
+            'rescheduleReason' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        if (! $this->reschedulingSessionId) {
+            return;
+        }
+
+        $oldSession = ClassSession::where('institution_id', $institutionId)
+            ->where('class_id', $this->classId)
+            ->findOrFail($this->reschedulingSessionId);
+
+        $formattedStartsAt = date('H:i:s', strtotime($this->rescheduleStartsAt));
+        $formattedEndsAt = date('H:i:s', strtotime($this->rescheduleEndsAt));
+
+        // Check if a session already exists for the new date and time
+        $exists = ClassSession::where('class_id', $this->classId)
+            ->whereDate('date', $this->rescheduleDate)
+            ->where('starts_at', $formattedStartsAt)
+            ->exists();
+
+        if ($exists) {
+            $this->addError('rescheduleStartsAt', __('A session already exists for this class at the chosen date and time.'));
+
+            return;
+        }
+
+        $reason = trim($this->rescheduleReason);
+
+        // 1. Create the new rescheduled session
+        $newSession = ClassSession::create([
+            'institution_id' => $institutionId,
+            'class_id' => $this->classId,
+            'schedule_id' => $oldSession->schedule_id,
+            'title' => ($oldSession->schoolClass->title ?? 'Class').' ('.date('M d', strtotime($this->rescheduleDate)).')',
+            'date' => $this->rescheduleDate,
+            'starts_at' => $formattedStartsAt,
+            'ends_at' => $formattedEndsAt,
+            'room' => trim($this->rescheduleRoom) ?: $oldSession->room,
+            'online_url' => $oldSession->online_url,
+            'status' => 'scheduled',
+            'rescheduled_from_id' => $oldSession->id,
+        ]);
+
+        // 2. Mark old session as rescheduled
+        $oldSession->update([
+            'status' => 'cancelled',
+            'cancel_reason' => __('Rescheduled to :date at :time. Reason: :reason', [
+                'date' => date('Y-m-d', strtotime($this->rescheduleDate)),
+                'time' => $this->rescheduleStartsAt,
+                'reason' => $reason,
+            ]),
+        ]);
+
+        // 3. Notify affected parties
+        $this->notifyRescheduled($oldSession, $newSession, $reason);
+
+        // 4. Audit Log
+        audit(
+            'session.rescheduled',
+            "Rescheduled session from {$oldSession->date->format('Y-m-d')} to {$newSession->date->format('Y-m-d')} ({$newSession->starts_at})",
+            $newSession,
+            ['old_session_id' => $oldSession->id, 'reason' => $reason]
+        );
+
+        $this->closeRescheduleModal();
+        session()->flash('success', __('Session rescheduled successfully and notifications dispatched.'));
+    }
+
+    private function notifyCancellation(ClassSession $session, string $reason): void
+    {
+        $class = $session->schoolClass;
+        if (! $class) {
+            return;
+        }
+
+        $notification = new SessionCancelledNotification($session, $reason);
+
+        if ($class->teacher) {
+            $class->teacher->notify($notification);
+        }
+
+        $students = $class->students()->wherePivot('status', 'active')->with(['user', 'guardians.user'])->get();
+
+        foreach ($students as $student) {
+            if ($student->user) {
+                $student->user->notify($notification);
+            }
+
+            foreach ($student->guardians as $guardian) {
+                if ($guardian->user) {
+                    $guardian->user->notify($notification);
+                }
+            }
+        }
+    }
+
+    private function notifyRescheduled(ClassSession $oldSession, ClassSession $newSession, string $reason): void
+    {
+        $class = $newSession->schoolClass;
+        if (! $class) {
+            return;
+        }
+
+        $notification = new SessionRescheduledNotification($oldSession, $newSession, $reason);
+
+        if ($class->teacher) {
+            $class->teacher->notify($notification);
+        }
+
+        $students = $class->students()->wherePivot('status', 'active')->with(['user', 'guardians.user'])->get();
+
+        foreach ($students as $student) {
+            if ($student->user) {
+                $student->user->notify($notification);
+            }
+
+            foreach ($student->guardians as $guardian) {
+                if ($guardian->user) {
+                    $guardian->user->notify($notification);
+                }
+            }
+        }
     }
 
     public function render(): View

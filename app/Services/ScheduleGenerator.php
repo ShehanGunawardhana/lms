@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ClassSchedule;
 use App\Models\ClassSession;
+use App\Models\Holiday;
 use App\Models\SchoolClass;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -71,6 +72,15 @@ class ScheduleGenerator
                     continue;
                 }
 
+                // Check if date falls on a registered institution holiday (§7.1, T-3.4)
+                $holiday = Holiday::where('institution_id', $class->institution_id)
+                    ->whereDate('date', $dateStr)
+                    ->first();
+
+                $isHoliday = $holiday !== null && $holiday->affectsClass($class);
+                $status = $isHoliday ? 'cancelled' : 'scheduled';
+                $cancelReason = $isHoliday ? "Holiday: {$holiday->name}" : null;
+
                 ClassSession::create([
                     'institution_id' => $class->institution_id,
                     'class_id' => $class->id,
@@ -81,7 +91,8 @@ class ScheduleGenerator
                     'ends_at' => $endTimeStr,
                     'room' => $schedule->room ?: $class->room,
                     'online_url' => $schedule->online_url ?: $class->online_url,
-                    'status' => 'scheduled',
+                    'status' => $status,
+                    'cancel_reason' => $cancelReason,
                 ]);
 
                 $created++;
