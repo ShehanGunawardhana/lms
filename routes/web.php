@@ -22,6 +22,7 @@ use App\Livewire\Public\ClassCatalog;
 use App\Livewire\Public\LecturerDirectory;
 use App\Livewire\Public\LecturerPortfolioPage;
 use App\Livewire\Teacher\PortfolioEditor;
+use App\Livewire\Teacher\TeacherDashboard;
 use App\Models\Institution;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -136,9 +137,10 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
         ->name('admin.classes.enrollments');
 
-    Route::get('/teacher/dashboard', function () {
-        return view('dashboards.teacher');
-    })->middleware('role:teacher')->name('teacher.dashboard');
+    // Teacher & Faculty Workspace Dashboard (§4, §7.1, T-3.6)
+    Route::get('/teacher/dashboard', TeacherDashboard::class)
+        ->middleware('role:teacher')
+        ->name('teacher.dashboard');
 
     // Lecturer Portfolio Editor (§5.5, T-2.2)
     Route::get('/teacher/portfolio', PortfolioEditor::class)

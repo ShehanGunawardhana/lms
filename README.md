@@ -873,7 +873,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 - [x] **T-3.3** Weekly schedules and `ScheduleGenerator` that creates dated sessions; safe regeneration that never deletes sessions with data.
 - [x] **T-3.4** Holidays, per-session cancellation and rescheduling with reason and notifications.
 - [x] **T-3.5** Enrollment: admin assigns students, capacity, waiting list, drop, and **schedule clash warning** for students in several classes.
-- [ ] **T-3.6** Teacher dashboard: my classes, upcoming sessions, my students.
+- [x] **T-3.6** Teacher dashboard: my classes, upcoming sessions, my students.
 - [ ] **T-3.7** Year-end rollover that archives old data and copies classes.
 
 ### Phase 4: Nursery module (activities)
@@ -1056,6 +1056,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-19 | T-3.3 | Weekly recurring schedules & dated sessions suite (§7.1): ClassSchedule and ClassSession models/migrations, ScheduleGenerator service with safe regeneration (never deleting sessions with operational data), ClassScheduleManager Livewire component at /admin/classes/{id}/schedule, cancellation modal with audit & feature tests |
 | 2026-11-19 | T-3.4 | Holidays and closures suite (§7.1): Holiday model, migration, factory, AcademicStructureManager holidays tab with filters/modal, auto-cancellation of conflicting scheduled sessions, per-session cancellation and rescheduling in ClassScheduleManager with mandatory reasons, SessionCancelledNotification & SessionRescheduledNotification (mail/db), audit logging & feature tests |
 | 2026-11-19 | T-3.5 | Student enrollment & waiting list engine with schedule clash detection (§7.1): EnrollmentService, ScheduleClashDetector (overlapping day/time algorithm), ClassEnrollmentManager Livewire component at /admin/classes/{id}/enrollments, capacity enforcement, automatic waiting list queue, waitlist position tracking, one-click promotion to active, drop enrollment with reason, re-enrollment, audit logging & comprehensive feature tests |
+| 2026-11-19 | T-3.6 | Teacher & faculty workspace dashboard (§4, §7.1): TeacherDashboard Livewire component at /teacher/dashboard, assigned classes cards with capacity progress meters, upcoming dated sessions list with 'Today' indicators and online link launchers, student rosters viewer with class filtering & search, portfolio status card, multi-institution isolation & comprehensive feature tests |
 
 ### Blockers and questions
 
