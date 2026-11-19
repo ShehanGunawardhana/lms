@@ -869,7 +869,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 ### Phase 3: Academics core
 
 - [x] **T-3.1** Academic years, terms and batches or groups. (§7.1)
-- [ ] **T-3.2** Classes CRUD for `nursery_group` and `institute_class` (fee, capacity, room or online link, lecturer). 
+- [x] **T-3.2** Classes CRUD for `nursery_group` and `institute_class` (fee, capacity, room or online link, lecturer). 
 - [ ] **T-3.3** Weekly schedules and `ScheduleGenerator` that creates dated sessions; safe regeneration that never deletes sessions with data.
 - [ ] **T-3.4** Holidays, per-session cancellation and rescheduling with reason and notifications.
 - [ ] **T-3.5** Enrollment: admin assigns students, capacity, waiting list, drop, and **schedule clash warning** for students in several classes.
@@ -1052,6 +1052,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-19 | T-2.3 | Admin portfolio review and publish queue: Livewire PortfolioReviewQueue at /admin/portfolios with status tabs (pending/published/rejected/all), full-profile inspection modal, one-click publish, mandatory-feedback revision request, unpublish, notifications (mail/db), and audit logging |
 | 2026-11-19 | T-2.4 | Public faculty directory (/lecturers), lecturer portfolio view (/lecturers/{id}), and public class catalog (/classes) with subject/day/search filters, schedules, pricing in LKR, class application modal, and audit logging |
 | 2026-11-19 | T-3.1 | Academic years, terms, and batches/groups management suite (§7.1): AcademicYear, Term, and Batch models/migrations, AcademicStructureManager Livewire component at /admin/academics with tabs, status transitions, current-year/term indicators, validation, audit logging & feature tests |
+| 2026-11-19 | T-3.2 | Classes management CRUD suite (§7.1): Livewire ClassManager at /admin/classes with filters, metrics, full create/edit modal for institute_class and nursery_group, capacity, pricing in LKR, room/online URL, lecturer assignment, status toggling, deletion safety rules & feature tests |
 
 ### Blockers and questions
 

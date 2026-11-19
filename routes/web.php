@@ -7,6 +7,7 @@ use App\Http\Controllers\PhoneVerificationController;
 use App\Http\Responses\LoginResponse;
 use App\Livewire\Admin\AcademicStructureManager;
 use App\Livewire\Admin\AuditLogViewer;
+use App\Livewire\Admin\ClassManager;
 use App\Livewire\Admin\NurseryStudentManager;
 use App\Livewire\Admin\ParentApprovalsQueue;
 use App\Livewire\Admin\PortfolioReviewQueue;
@@ -117,6 +118,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/academics', AcademicStructureManager::class)
         ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
         ->name('admin.academics');
+
+    // Classes Management CRUD (§7.1, T-3.2)
+    Route::get('/admin/classes', ClassManager::class)
+        ->middleware(['role:super_admin|admin', 'two_factor.enforce'])
+        ->name('admin.classes');
 
     Route::get('/teacher/dashboard', function () {
         return view('dashboards.teacher');
