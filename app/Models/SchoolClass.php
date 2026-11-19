@@ -32,6 +32,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read Batch|null $batch
  * @property-read Collection<int, Student> $students
  * @property-read Collection<int, Enrollment> $enrollments
+ * @property-read Collection<int, ClassSchedule> $schedules
+ * @property-read Collection<int, ClassSession> $sessions
  */
 class SchoolClass extends Model
 {
@@ -106,6 +108,22 @@ class SchoolClass extends Model
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class, 'class_id');
+    }
+
+    /**
+     * @return HasMany<ClassSchedule, $this>
+     */
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(ClassSchedule::class, 'class_id')->orderBy('weekday')->orderBy('starts_at');
+    }
+
+    /**
+     * @return HasMany<ClassSession, $this>
+     */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(ClassSession::class, 'class_id')->orderBy('date')->orderBy('starts_at');
     }
 
     public function availableSeats(): int
