@@ -6,8 +6,10 @@ use App\Enums\ActivityStatus;
 use App\Enums\ClassKind;
 use App\Enums\RoleName;
 use App\Models\Activity;
+use App\Models\ActivityVideo;
 use App\Models\SchoolClass;
 use App\Models\User;
+use App\Services\YoutubeService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -58,6 +60,30 @@ class ActivityManager extends Component
     public bool $allowLate = true;
 
     public string $status = 'draft';
+
+    /**
+     * Attached videos for this activity:
+     * list of array{id: ?int, youtube_url: string, video_id: string, title: string, thumbnail_url: string, sort_order: int}
+     *
+     * @var list<array{id: ?int, youtube_url: string, video_id: string, title: string, thumbnail_url: string, sort_order: int}>
+     */
+    public array $videos = [];
+
+    public string $newVideoUrl = '';
+
+    /**
+     * @var array{video_id: string, title: string, thumbnail_url: string, author_name: ?string, author_url: ?string, embed_url: string, is_valid: bool}|null
+     */
+    public ?array $pendingVideoPreview = null;
+
+    public string $videoError = '';
+
+    // Watch Video Modal state
+    public bool $showWatchModal = false;
+
+    public ?string $watchVideoId = null;
+
+    public ?string $watchVideoTitle = null;
 
     /**
      * @var list<string>
@@ -133,6 +159,10 @@ class ActivityManager extends Component
         $this->deadline = '';
         $this->allowLate = true;
         $this->status = 'draft';
+        $this->videos = [];
+        $this->newVideoUrl = '';
+        $this->pendingVideoPreview = null;
+        $this->videoError = '';
 
         $this->showFormModal = true;
     }
@@ -143,7 +173,9 @@ class ActivityManager extends Component
         $institutionId = current_institution_id() ?? 1;
 
         /** @var Activity $activity */
-        $activity = Activity::where('institution_id', $institutionId)->findOrFail($id);
+        $activity = Activity::where('institution_id', $institutionId)
+            ->with('videos')
+            ->findOrFail($id);
         $this->authorize('update', $activity);
 
         $this->editingActivityId = $activity->id;
@@ -156,6 +188,23 @@ class ActivityManager extends Component
         $this->deadline = $activity->deadline ? $activity->deadline->format('Y-m-d\TH:i') : '';
         $this->allowLate = $activity->allow_late;
         $this->status = $activity->status->value;
+
+        /** @var list<array{id: ?int, youtube_url: string, video_id: string, title: string, thumbnail_url: string, sort_order: int}> $loadedVideos */
+        $loadedVideos = [];
+        foreach ($activity->videos as $i => $v) {
+            $loadedVideos[] = [
+                'id' => $v->id,
+                'youtube_url' => $v->youtube_url,
+                'video_id' => $v->video_id,
+                'title' => $v->title ?? "YouTube Video ({$v->video_id})",
+                'thumbnail_url' => $v->thumbnailUrl(),
+                'sort_order' => $v->sort_order,
+            ];
+        }
+        $this->videos = $loadedVideos;
+        $this->newVideoUrl = '';
+        $this->pendingVideoPreview = null;
+        $this->videoError = '';
 
         $this->showFormModal = true;
     }
@@ -192,12 +241,156 @@ class ActivityManager extends Component
         } else {
             $this->authorize('create', Activity::class);
             $data['created_by'] = $user->id;
-            Activity::create($data);
+            $activity = Activity::create($data);
             session()->flash('success', __('New activity created successfully.'));
         }
 
+        // Synchronize activity videos
+        $keptVideoIds = [];
+        foreach ($this->videos as $i => $videoData) {
+            $video = null;
+            if (! empty($videoData['id'])) {
+                $video = ActivityVideo::where('activity_id', $activity->id)->find($videoData['id']);
+            }
+
+            if ($video) {
+                $video->update([
+                    'youtube_url' => $videoData['youtube_url'],
+                    'video_id' => $videoData['video_id'],
+                    'title' => $videoData['title'],
+                    'thumbnail_url' => $videoData['thumbnail_url'],
+                    'sort_order' => $i,
+                ]);
+            } else {
+                $video = ActivityVideo::create([
+                    'activity_id' => $activity->id,
+                    'youtube_url' => $videoData['youtube_url'],
+                    'video_id' => $videoData['video_id'],
+                    'title' => $videoData['title'],
+                    'thumbnail_url' => $videoData['thumbnail_url'],
+                    'sort_order' => $i,
+                    'is_healthy' => true,
+                ]);
+            }
+            $keptVideoIds[] = $video->id;
+        }
+
+        ActivityVideo::where('activity_id', $activity->id)
+            ->whereNotIn('id', $keptVideoIds)
+            ->delete();
+
         $this->showFormModal = false;
         $this->resetPage();
+    }
+
+    public function updatedNewVideoUrl(): void
+    {
+        $url = trim($this->newVideoUrl);
+        if ($url === '') {
+            $this->pendingVideoPreview = null;
+            $this->videoError = '';
+
+            return;
+        }
+
+        $youtube = app(YoutubeService::class);
+        if (! $youtube->isValid($url)) {
+            $this->pendingVideoPreview = null;
+            $this->videoError = __('Please enter a valid YouTube video URL (e.g. watch, youtu.be, shorts, or embed).');
+
+            return;
+        }
+
+        $this->videoError = '';
+        $this->pendingVideoPreview = $youtube->fetchOEmbed($url);
+    }
+
+    public function addVideo(): void
+    {
+        $url = trim($this->newVideoUrl);
+        if ($url === '') {
+            return;
+        }
+
+        $youtube = app(YoutubeService::class);
+        $preview = $this->pendingVideoPreview ?? $youtube->fetchOEmbed($url);
+
+        if (! $preview['is_valid']) {
+            $this->videoError = __('Please enter a valid YouTube video URL.');
+
+            return;
+        }
+
+        // Avoid duplicate video IDs
+        foreach ($this->videos as $v) {
+            if ($v['video_id'] === $preview['video_id']) {
+                $this->videoError = __('This video has already been added.');
+
+                return;
+            }
+        }
+
+        $this->videos[] = [
+            'id' => null,
+            'youtube_url' => $url,
+            'video_id' => $preview['video_id'],
+            'title' => $preview['title'],
+            'thumbnail_url' => $preview['thumbnail_url'],
+            'sort_order' => count($this->videos),
+        ];
+
+        $this->newVideoUrl = '';
+        $this->pendingVideoPreview = null;
+        $this->videoError = '';
+    }
+
+    public function removeVideo(int $index): void
+    {
+        if (isset($this->videos[$index])) {
+            unset($this->videos[$index]);
+            $this->videos = array_values($this->videos);
+            foreach ($this->videos as $i => $v) {
+                $this->videos[$i]['sort_order'] = $i;
+            }
+        }
+    }
+
+    public function moveVideoUp(int $index): void
+    {
+        if ($index > 0 && isset($this->videos[$index])) {
+            $prev = $this->videos[$index - 1];
+            $this->videos[$index - 1] = $this->videos[$index];
+            $this->videos[$index] = $prev;
+
+            $this->videos[$index - 1]['sort_order'] = $index - 1;
+            $this->videos[$index]['sort_order'] = $index;
+        }
+    }
+
+    public function moveVideoDown(int $index): void
+    {
+        if ($index < count($this->videos) - 1 && isset($this->videos[$index])) {
+            $next = $this->videos[$index + 1];
+            $this->videos[$index + 1] = $this->videos[$index];
+            $this->videos[$index] = $next;
+
+            $this->videos[$index]['sort_order'] = $index;
+            $this->videos[$index + 1]['sort_order'] = $index + 1;
+        }
+    }
+
+    public function watchVideo(string $videoId, string $title = ''): void
+    {
+        $this->watchVideoId = $videoId;
+        $this->watchVideoTitle = $title;
+        $this->showWatchModal = true;
+    }
+
+    public function closeWatchModal(): void
+    {
+        $this->showWatchModal = false;
+        $this->watchVideoId = null;
+        $this->watchVideoTitle = null;
     }
 
     public function publishActivity(int $id): void

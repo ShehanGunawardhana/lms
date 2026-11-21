@@ -55,4 +55,14 @@ class ActivityVideo extends Model
     {
         return $this->belongsTo(Activity::class, 'activity_id');
     }
+
+    public function embedUrl(): string
+    {
+        return "https://www.youtube-nocookie.com/embed/{$this->video_id}?rel=0&modestbranding=1";
+    }
+
+    public function thumbnailUrl(): string
+    {
+        return $this->thumbnail_url ?: "https://img.youtube.com/vi/{$this->video_id}/hqdefault.jpg";
+    }
 }

@@ -879,7 +879,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 ### Phase 4: Nursery module (activities)
 
 - [x] **T-4.1** Activities CRUD with `draft | published | closed`, target class or group, age group, publish date, instructions. (§6.1)
-- [ ] **T-4.2** `YoutubeService` and component: URL validation, ID extraction for all URL forms, oEmbed title and thumbnail preview, `youtube-nocookie.com` embed, several videos per activity. (§6.1)
+- [x] **T-4.2** `YoutubeService` and component: URL validation, ID extraction for all URL forms, oEmbed title and thumbnail preview, `youtube-nocookie.com` embed, several videos per activity. (§6.1)
 - [ ] **T-4.3** Additional learning materials on an activity (files and links), added while creating it. (§6.1)
 - [ ] **T-4.4** Parent feed and activity page: instructions, videos, materials, countdown, per-child status. (§6.6)
 - [ ] **T-4.5** Deadlines and **extensions** for everyone or per child, with log, notification and live countdown update. (§6.2)
@@ -1059,6 +1059,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-19 | T-3.6 | Teacher & faculty workspace dashboard (§4, §7.1): TeacherDashboard Livewire component at /teacher/dashboard, assigned classes cards with capacity progress meters, upcoming dated sessions list with 'Today' indicators and online link launchers, student rosters viewer with class filtering & search, portfolio status card, multi-institution isolation & comprehensive feature tests |
 | 2026-11-19 | T-3.7 | Year-end academic rollover engine (§7.1): AcademicRolloverService, AcademicRolloverManager Livewire wizard at /admin/academics/rollover, multi-step workflow (source/target year selection, quick-create modal, class checklist, timetable schedule replication, student rollover toggle, archival of past cycle, completion of source enrollments, target cycle activation), atomic DB transactions, audit logging & comprehensive feature tests |
 | 2026-11-19 | T-4.1 | Nursery activities CRUD suite (§6.1): activities, activity_videos, activity_materials migrations and models, ActivityStatus enum (draft, published, closed) with badges, ActivityPolicy with role/institution isolation, ActivityManager Livewire component at /teacher/activities with metrics, status/class filters, search, full create/edit modal with age group presets, step-by-step instructions, publish date, deadline, allow_late toggle, lifecycle transitions (publish, close, reopen), soft delete & comprehensive feature tests |
+| 2026-11-19 | T-4.2 | YouTube integration suite (§6.1): YoutubeService (ID extraction across watch, youtu.be, embed, shorts, live, and raw ID formats, public oEmbed title & thumbnail fetching with graceful offline fallback, health checker, youtube-nocookie.com privacy-enhanced URL generator), <x-youtube-player> Blade component with lazy loading & sandbox allow permissions, multiple video attachment & live preview in ActivityManager with drag reordering, inline thumbnail gallery & video watch modal, unit & feature tests |
 
 ### Blockers and questions
 

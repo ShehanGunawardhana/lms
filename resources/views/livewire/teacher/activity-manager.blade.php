@@ -230,6 +230,47 @@
                                 <p class="line-clamp-2 whitespace-pre-line">{{ $act->instructions }}</p>
                             </div>
 
+                            <!-- Attached Videos Gallery (§6.1, T-4.2) -->
+                            @if ($act->videos->isNotEmpty())
+                                <div class="pt-2">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">🎥 {{ __('Video Lessons (:count)', ['count' => $act->videos->count()]) }}</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium">youtube-nocookie.com</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                        @foreach ($act->videos as $vid)
+                                            <div
+                                                wire:click="watchVideo('{{ $vid->video_id }}', '{{ addslashes($vid->title ?? __('Video Lesson')) }}')"
+                                                class="group/vid relative cursor-pointer overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm hover:shadow-md transition-all duration-150 hover:-translate-y-0.5"
+                                                title="{{ __('Click to watch video') }}"
+                                            >
+                                                <div class="aspect-video w-full overflow-hidden bg-slate-950 relative">
+                                                    <img
+                                                        src="{{ $vid->thumbnailUrl() }}"
+                                                        alt="{{ $vid->title }}"
+                                                        class="w-full h-full object-cover group-hover/vid:scale-105 transition-transform duration-300"
+                                                        loading="lazy"
+                                                    />
+                                                    <div class="absolute inset-0 bg-black/30 group-hover/vid:bg-black/10 transition-colors flex items-center justify-center">
+                                                        <div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg group-hover/vid:scale-110 transition-transform">
+                                                            <svg class="w-4 h-4 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                                                <path d="M8 5v14l11-7z"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="p-2 bg-white dark:bg-slate-900">
+                                                    <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate group-hover/vid:text-amber-600 transition-colors">
+                                                        {{ $vid->title ?: __('Video Lesson') }}
+                                                    </p>
+                                                    <span class="text-[10px] text-slate-400 font-mono">{{ $vid->video_id }}</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
                             <!-- Meta Info & Badges -->
                             <div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
                                 <span>✍️ {{ __('Created by') }} {{ $act->creator?->name ?? __('Staff') }}</span>
@@ -410,6 +451,152 @@
                         @error('instructions') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
                     </div>
 
+                    <!-- Video Lessons (YouTube) (§6.1, T-4.2) -->
+                    <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    🎥 {{ __('Video Lessons (YouTube)') }}
+                                </label>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {{ __('Paste any YouTube link (watch, youtu.be, embed, shorts). We fetch preview & embed securely via youtube-nocookie.com.') }}
+                                </p>
+                            </div>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
+                                {{ count($videos) }} {{ __('added') }}
+                            </span>
+                        </div>
+
+                        <!-- Add Video Input with Live Preview Trigger -->
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                            <div class="relative flex-1">
+                                <input
+                                    wire:model.live.debounce.400ms="newVideoUrl"
+                                    type="text"
+                                    placeholder="{{ __('https://www.youtube.com/watch?v=... or youtu.be/...') }}"
+                                    class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition font-mono text-xs"
+                                />
+                            </div>
+                            <button
+                                wire:click="addVideo"
+                                type="button"
+                                class="px-4 py-2 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 text-white shadow-sm transition active:scale-95 shrink-0 inline-flex items-center justify-center gap-1.5"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                <span>{{ __('Add Video') }}</span>
+                            </button>
+                        </div>
+
+                        <!-- Video Error Feedback -->
+                        @if ($videoError)
+                            <p class="text-xs text-rose-500 font-medium flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                {{ $videoError }}
+                            </p>
+                        @endif
+
+                        <!-- Live oEmbed Preview Card before adding -->
+                        @if ($pendingVideoPreview && $pendingVideoPreview['is_valid'])
+                            <div class="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-between gap-3 animate-in fade-in duration-150">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <img
+                                        src="{{ $pendingVideoPreview['thumbnail_url'] }}"
+                                        alt="{{ $pendingVideoPreview['title'] }}"
+                                        class="w-20 h-12 object-cover rounded-lg shrink-0 shadow-xs border border-amber-200 dark:border-amber-900"
+                                    />
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                            {{ $pendingVideoPreview['title'] }}
+                                        </p>
+                                        <p class="text-[10px] text-amber-700 dark:text-amber-400 font-mono mt-0.5">
+                                            ID: {{ $pendingVideoPreview['video_id'] }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    wire:click="addVideo"
+                                    type="button"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-white shadow-xs shrink-0"
+                                >
+                                    {{ __('Confirm & Add') }}
+                                </button>
+                            </div>
+                        @endif
+
+                        <!-- Current Attached Videos List -->
+                        @if (! empty($videos))
+                            <div class="space-y-2 pt-1">
+                                @foreach ($videos as $idx => $vItem)
+                                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-3">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <span class="w-5 h-5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-black flex items-center justify-center shrink-0">
+                                                {{ $idx + 1 }}
+                                            </span>
+                                            <img
+                                                src="{{ $vItem['thumbnail_url'] }}"
+                                                alt="{{ $vItem['title'] }}"
+                                                class="w-14 h-9 object-cover rounded shrink-0 shadow-xs"
+                                            />
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                                                    {{ $vItem['title'] }}
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 font-mono truncate">
+                                                    {{ $vItem['youtube_url'] }}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <!-- Up Button -->
+                                            <button
+                                                wire:click="moveVideoUp({{ $idx }})"
+                                                type="button"
+                                                class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30"
+                                                @if ($idx === 0) disabled @endif
+                                                title="{{ __('Move up') }}"
+                                            >
+                                                ▲
+                                            </button>
+                                            <!-- Down Button -->
+                                            <button
+                                                wire:click="moveVideoDown({{ $idx }})"
+                                                type="button"
+                                                class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30"
+                                                @if ($idx === count($videos) - 1) disabled @endif
+                                                title="{{ __('Move down') }}"
+                                            >
+                                                ▼
+                                            </button>
+                                            <!-- Preview Watch Button -->
+                                            <button
+                                                wire:click="watchVideo('{{ $vItem['video_id'] }}', '{{ addslashes($vItem['title']) }}')"
+                                                type="button"
+                                                class="px-2 py-1 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                                title="{{ __('Watch preview') }}"
+                                            >
+                                                ▶ {{ __('Play') }}
+                                            </button>
+                                            <!-- Remove Button -->
+                                            <button
+                                                wire:click="removeVideo({{ $idx }})"
+                                                type="button"
+                                                class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition"
+                                                title="{{ __('Remove video') }}"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
                     <!-- Publish Date & Deadline (2 Columns) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -516,6 +703,55 @@
                         class="px-4 py-2 text-sm font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition"
                     >
                         {{ __('Yes, Delete') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Watch Video Modal (§6.1, T-4.2) -->
+    @if ($showWatchModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div class="min-w-0 pr-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-red-600 flex items-center gap-1">
+                                <span>▶</span> {{ __('Video Lesson') }}
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-medium">
+                                youtube-nocookie.com
+                            </span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white truncate mt-0.5">
+                            {{ $watchVideoTitle ?? __('YouTube Video Player') }}
+                        </h3>
+                    </div>
+                    <button
+                        wire:click="closeWatchModal"
+                        type="button"
+                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="rounded-2xl overflow-hidden bg-black shadow-lg">
+                    <x-youtube-player :videoId="$watchVideoId" :title="$watchVideoTitle ?? 'Video Lesson'" :autoplay="true" />
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
+                    <span class="flex items-center gap-1">
+                        🛡️ {{ __('Embedded using privacy-enhanced domain youtube-nocookie.com (no tracking cookies).') }}
+                    </span>
+                    <button
+                        wire:click="closeWatchModal"
+                        type="button"
+                        class="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
+                    >
+                        {{ __('Close Player') }}
                     </button>
                 </div>
             </div>
