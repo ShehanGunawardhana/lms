@@ -23,12 +23,17 @@ class FileAssetPolicy extends BasePolicy
         }
 
         // 2. Administrators, Cashiers, and Teachers of the institution
-        if ($user->hasRole([RoleName::Admin->value, RoleName::Teacher->value, RoleName::Cashier->value])) {
+        if ($user->hasAnyRole([
+            RoleName::SuperAdmin->value,
+            RoleName::Admin->value,
+            RoleName::Teacher->value,
+            RoleName::Cashier->value,
+        ])) {
             return true;
         }
 
         // 3. Learning materials & profile photos in the same institution
-        if ($fileAsset->purpose === 'profile_photo' || $fileAsset->purpose === 'material') {
+        if ($fileAsset->purpose === 'profile_photo' || $fileAsset->purpose === 'material' || $fileAsset->purpose === 'activity_submission') {
             return true;
         }
 

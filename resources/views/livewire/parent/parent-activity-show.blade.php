@@ -1,4 +1,22 @@
 <div>
+    {{-- Session Flash Notifications --}}
+    @if (session()->has('success'))
+        <div class="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2">
+                <span class="text-base">✅</span>
+                <span class="font-semibold">{{ session('success') }}</span>
+            </div>
+        </div>
+    @endif
+    @if (session()->has('error'))
+        <div class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center justify-between shadow-2xs">
+            <div class="flex items-center gap-2">
+                <span class="text-base">⚠️</span>
+                <span class="font-semibold">{{ session('error') }}</span>
+            </div>
+        </div>
+    @endif
+
     {{-- Breadcrumb Navigation --}}
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <nav class="flex items-center gap-2 text-xs text-slate-500">
@@ -167,7 +185,7 @@
         {{-- Child Submission Status Hero Strip --}}
         @if($selectedChild)
             <div class="p-6 bg-slate-50 border-t border-slate-200">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-900 font-black flex items-center justify-center text-base">
                             {{ substr($selectedChild->first_name, 0, 1) }}
@@ -178,6 +196,11 @@
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $submissionStatus->badgeClasses() }}">
                                     {{ $submissionStatus->label() }}
                                 </span>
+                                @if($submission)
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+                                        v{{ $submission->version }}
+                                    </span>
+                                @endif
                             </div>
                             <p class="text-xs text-slate-500 mt-0.5">
                                 @if($submissionStatus === \App\Enums\ActivitySubmissionStatus::NotStarted)
@@ -195,17 +218,152 @@
                         </div>
                     </div>
 
-                    {{-- Review Feedback Callout if reviewed or returned --}}
-                    @if($submission && $submission->feedback)
-                        <div class="sm:max-w-xs p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-                            <span class="font-bold block mb-1">👩‍🏫 {{ __('Teacher Feedback:') }}</span>
-                            <p class="text-xs italic leading-relaxed">"{{ $submission->feedback }}"</p>
-                            @if($submission->rating)
-                                <p class="mt-1 text-sm font-black">{{ $submission->rating }}</p>
+                    {{-- Submission Hero Actions --}}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        @if($submissionStatus === \App\Enums\ActivitySubmissionStatus::NotStarted)
+                            @if($activity->canAcceptSubmissionsForStudent($selectedChild->id))
+                                <button
+                                    type="button"
+                                    wire:click="openSubmitModal"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-xs transition-all"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                    </svg>
+                                    <span>{{ __('Submit Child\'s Work') }}</span>
+                                </button>
+                            @else
+                                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 text-slate-600 text-xs font-semibold">
+                                    <span>🔒</span>
+                                    <span>{{ __('Submissions Closed') }}</span>
+                                </div>
+                            @endif
+                        @elseif($submission)
+                            @if($submission->canBeModifiedByParent())
+                                @if($submissionStatus === \App\Enums\ActivitySubmissionStatus::Returned)
+                                    <button
+                                        type="button"
+                                        wire:click="openReplaceModal"
+                                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span>{{ __('Submit Revised Work') }}</span>
+                                    </button>
+                                @else
+                                    <button
+                                        type="button"
+                                        wire:click="openReplaceModal"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-2xs transition-all"
+                                    >
+                                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span>{{ __('Replace File') }}</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        wire:click="openEditNoteModal"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-2xs transition-all"
+                                    >
+                                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                        <span>{{ __('Edit Note') }}</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        wire:click="confirmDelete"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs shadow-2xs transition-all"
+                                    >
+                                        <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        <span>{{ __('Delete') }}</span>
+                                    </button>
+                                @endif
+                            @elseif($submission->isLocked())
+                                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 text-slate-600 text-xs font-semibold">
+                                    <span>🔒</span>
+                                    <span>{{ __('Submission Locked') }}</span>
+                                </div>
+                            @endif
+
+                            @if($submissionHistory->count() > 1)
+                                <button
+                                    type="button"
+                                    wire:click="openHistoryModal"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
+                                >
+                                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>{{ __('History (:count)', ['count' => $submissionHistory->count()]) }}</span>
+                                </button>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Submitted File Details & Teacher Review --}}
+                @if($submission)
+                    <div class="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {{-- Active File Box --}}
+                        <div class="p-3.5 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center font-black text-sm shrink-0">
+                                    📎
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-slate-900 truncate">
+                                        {{ $submission->fileOriginalName() ?: __('Submitted File') }}
+                                    </p>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">
+                                        {{ $submission->formattedFileSize() }} • {{ __('Version :v', ['v' => $submission->version]) }}
+                                    </p>
+                                </div>
+                            </div>
+                            @if($submission->fileDownloadUrl())
+                                <a
+                                    href="{{ $submission->fileDownloadUrl() }}"
+                                    target="_blank"
+                                    download
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white text-xs font-bold transition-all shadow-2xs shrink-0"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    <span>{{ __('Download') }}</span>
+                                </a>
                             @endif
                         </div>
-                    @endif
-                </div>
+
+                        {{-- Parent Note or Teacher Feedback Box --}}
+                        @if($submission->feedback)
+                            <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold">👩‍🏫 {{ __('Teacher Feedback:') }}</span>
+                                    @if($submission->rating)
+                                        <span class="font-black text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-lg">{{ $submission->rating }}</span>
+                                    @endif
+                                </div>
+                                <p class="italic text-[11px] leading-relaxed">"{{ $submission->feedback }}"</p>
+                            </div>
+                        @elseif($submission->note)
+                            <div class="p-3.5 rounded-2xl bg-white border border-slate-200 text-xs text-slate-700 space-y-1">
+                                <span class="font-bold text-slate-500 block text-[10px] uppercase tracking-wider">{{ __('Your Note to Teacher:') }}</span>
+                                <p class="text-xs italic leading-relaxed text-slate-800">"{{ $submission->note }}"</p>
+                            </div>
+                        @else
+                            <div class="p-3.5 rounded-2xl bg-white border border-dashed border-slate-200 text-xs text-slate-400 flex items-center justify-center">
+                                <span>{{ __('No parent note provided.') }}</span>
+                            </div>
+                        @endif
+                    </div>
+                @endif
             </div>
         @endif
     </div>
@@ -345,4 +503,344 @@
             </div>
         </div>
     </div>
+
+    {{-- Upload / Submit Modal --}}
+    @if($showSubmitModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-black text-slate-900">{{ __('Submit Work for :child', ['child' => $selectedChild?->full_name]) }}</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">{{ __('Upload your child\'s completed artwork, video, or worksheet.') }}</p>
+                    </div>
+                    <button type="button" wire:click="closeSubmitModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form wire:submit="submitWork" class="p-6 space-y-4">
+                    @if($submissionError)
+                        <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                            {{ $submissionError }}
+                        </div>
+                    @endif
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            {{ __('File (Photo, Video, or PDF — max 50MB)') }} <span class="text-rose-500">*</span>
+                        </label>
+                        <input
+                            type="file"
+                            wire:model="submissionFile"
+                            accept=".mp4,.mov,.webm,.pdf,.jpg,.jpeg,.png,.webp"
+                            class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 border border-slate-200 rounded-xl cursor-pointer"
+                        />
+                        <div wire:loading wire:target="submissionFile" class="text-xs text-brand-600 font-semibold mt-1.5 flex items-center gap-1.5">
+                            <svg class="animate-spin h-3.5 w-3.5 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>{{ __('Uploading file...') }}</span>
+                        </div>
+                        @error('submissionFile') <p class="text-xs text-rose-600 mt-1 font-semibold">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            {{ __('Optional Note to Teacher') }}
+                        </label>
+                        <textarea
+                            wire:model="submissionNote"
+                            rows="3"
+                            placeholder="{{ __('Add observations or notes about how your child enjoyed the activity...') }}"
+                            class="w-full text-xs rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500 placeholder:text-slate-400"
+                        ></textarea>
+                        @error('submissionNote') <p class="text-xs text-rose-600 mt-1 font-semibold">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button
+                            type="button"
+                            wire:click="closeSubmitModal"
+                            class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                        >
+                            {{ __('Cancel') }}
+                        </button>
+                        <button
+                            type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="submissionFile, submitWork"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50"
+                        >
+                            <span wire:loading.remove wire:target="submitWork">{{ __('Submit Work') }}</span>
+                            <span wire:loading wire:target="submitWork">{{ __('Submitting...') }}</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- Edit Note Modal --}}
+    @if($showEditNoteModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-black text-slate-900">{{ __('Edit Submission Note') }}</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">{{ __('Update your comments or reflection for the teacher.') }}</p>
+                    </div>
+                    <button type="button" wire:click="closeEditNoteModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form wire:submit="saveNote" class="p-6 space-y-4">
+                    @if($submissionError)
+                        <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                            {{ $submissionError }}
+                        </div>
+                    @endif
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            {{ __('Note to Teacher') }}
+                        </label>
+                        <textarea
+                            wire:model="editingNote"
+                            rows="4"
+                            placeholder="{{ __('Add observations or notes about how your child enjoyed the activity...') }}"
+                            class="w-full text-xs rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500"
+                        ></textarea>
+                        @error('editingNote') <p class="text-xs text-rose-600 mt-1 font-semibold">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button
+                            type="button"
+                            wire:click="closeEditNoteModal"
+                            class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                        >
+                            {{ __('Cancel') }}
+                        </button>
+                        <button
+                            type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="saveNote"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50"
+                        >
+                            <span wire:loading.remove wire:target="saveNote">{{ __('Save Note') }}</span>
+                            <span wire:loading wire:target="saveNote">{{ __('Saving...') }}</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- Replace Work Modal (creates new version) --}}
+    @if($showReplaceModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-black text-slate-900">{{ __('Replace Submission (New Version)') }}</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            {{ __('Uploading a new file will create version :ver. The teacher will review the latest version.', ['ver' => 'v' . (($submission?->version ?? 1) + 1)]) }}
+                        </p>
+                    </div>
+                    <button type="button" wire:click="closeReplaceModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form wire:submit="replaceWork" class="p-6 space-y-4">
+                    @if($submissionError)
+                        <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                            {{ $submissionError }}
+                        </div>
+                    @endif
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            {{ __('New File (Photo, Video, or PDF — max 50MB)') }} <span class="text-rose-500">*</span>
+                        </label>
+                        <input
+                            type="file"
+                            wire:model="replacementFile"
+                            accept=".mp4,.mov,.webm,.pdf,.jpg,.jpeg,.png,.webp"
+                            class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 border border-slate-200 rounded-xl cursor-pointer"
+                        />
+                        <div wire:loading wire:target="replacementFile" class="text-xs text-brand-600 font-semibold mt-1.5 flex items-center gap-1.5">
+                            <svg class="animate-spin h-3.5 w-3.5 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>{{ __('Uploading file...') }}</span>
+                        </div>
+                        @error('replacementFile') <p class="text-xs text-rose-600 mt-1 font-semibold">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                            {{ __('Updated Note to Teacher') }}
+                        </label>
+                        <textarea
+                            wire:model="replacementNote"
+                            rows="3"
+                            placeholder="{{ __('Add observations or notes about how your child enjoyed the activity...') }}"
+                            class="w-full text-xs rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500"
+                        ></textarea>
+                        @error('replacementNote') <p class="text-xs text-rose-600 mt-1 font-semibold">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button
+                            type="button"
+                            wire:click="closeReplaceModal"
+                            class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                        >
+                            {{ __('Cancel') }}
+                        </button>
+                        <button
+                            type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="replacementFile, replaceWork"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50"
+                        >
+                            <span wire:loading.remove wire:target="replaceWork">{{ __('Upload & Replace') }}</span>
+                            <span wire:loading wire:target="replaceWork">{{ __('Uploading...') }}</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- Delete Confirmation Modal --}}
+    @if($showDeleteModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div class="p-6 text-center space-y-3">
+                    <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl">
+                        🗑️
+                    </div>
+                    <h3 class="text-base font-black text-slate-900">{{ __('Delete This Submission?') }}</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        {{ __('Are you sure you want to delete version :ver for :child? You can re-upload fresh work anytime before the deadline closes.', ['ver' => 'v' . ($submission?->version ?? 1), 'child' => $selectedChild?->full_name]) }}
+                    </p>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button
+                        type="button"
+                        wire:click="closeDeleteModal"
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+                    >
+                        {{ __('Cancel') }}
+                    </button>
+                    <button
+                        type="button"
+                        wire:click="deleteSubmission"
+                        wire:loading.attr="disabled"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50"
+                    >
+                        <span>{{ __('Yes, Delete Submission') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Version History Modal --}}
+    @if($showHistoryModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+                    <div>
+                        <h3 class="text-base font-black text-slate-900">{{ __('Submission History: :child', ['child' => $selectedChild?->full_name]) }}</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">{{ __('All submitted versions and teacher reviews for this activity.') }}</p>
+                    </div>
+                    <button type="button" wire:click="closeHistoryModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="p-6 overflow-y-auto space-y-4">
+                    @forelse($submissionHistory as $hist)
+                        <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-brand-100 text-brand-800">
+                                        v{{ $hist->version }}
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $hist->status->badgeClasses() }}">
+                                        {{ $hist->status->label() }}
+                                    </span>
+                                    @if($hist->is_late)
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                            {{ __('Late') }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <span class="text-[11px] text-slate-400">
+                                    {{ $hist->submitted_at?->format('M j, Y • g:i A') }}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-100">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-slate-900 truncate">
+                                        {{ $hist->fileOriginalName() ?: __('Uploaded File') }}
+                                    </p>
+                                    <p class="text-[10px] text-slate-400">
+                                        {{ $hist->formattedFileSize() }}
+                                    </p>
+                                </div>
+                                @if($hist->fileDownloadUrl())
+                                    <a
+                                        href="{{ $hist->fileDownloadUrl() }}"
+                                        target="_blank"
+                                        download
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-600 hover:text-white text-xs font-bold transition-all shrink-0"
+                                    >
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        <span>{{ __('Download') }}</span>
+                                    </a>
+                                @endif
+                            </div>
+
+                            @if($hist->note)
+                                <div class="text-xs text-slate-600 italic">
+                                    <span class="font-bold text-slate-500 not-italic">{{ __('Note:') }}</span> "{{ $hist->note }}"
+                                </div>
+                            @endif
+
+                            @if($hist->feedback)
+                                <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold">👩‍🏫 {{ __('Teacher Feedback:') }}</span>
+                                        @if($hist->rating)
+                                            <span class="font-black text-amber-800 bg-amber-200/60 px-1.5 py-0.5 rounded text-[10px]">{{ $hist->rating }}</span>
+                                        @endif
+                                    </div>
+                                    <p class="italic text-[11px] leading-relaxed">"{{ $hist->feedback }}"</p>
+                                </div>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="text-xs text-slate-400 text-center py-6">
+                            {{ __('No submission history found.') }}
+                        </p>
+                    @endforelse
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end shrink-0">
+                    <button
+                        type="button"
+                        wire:click="closeHistoryModal"
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors"
+                    >
+                        {{ __('Close') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
