@@ -157,4 +157,25 @@ class ActivityPolicy extends BasePolicy
     {
         return $this->update($user, $activity);
     }
+
+    /**
+     * Determine whether the user can review student submissions for the activity.
+     */
+    public function reviewSubmissions(User $user, Activity $activity): bool
+    {
+        if (! $this->belongsToSameInstitution($user, $activity)) {
+            return false;
+        }
+
+        if ($user->hasAnyRole([RoleName::SuperAdmin->value, RoleName::Admin->value])) {
+            return true;
+        }
+
+        if ($user->hasRole(RoleName::Teacher->value)) {
+            return $activity->created_by === $user->id
+                || ($activity->schoolClass && $activity->schoolClass->teacher_id === $user->id);
+        }
+
+        return false;
+    }
 }

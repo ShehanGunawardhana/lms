@@ -348,6 +348,22 @@
 
                         <!-- Actions Row -->
                         <div class="flex items-center md:flex-col justify-end gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
+                            <!-- Review Submissions Button (§6.4, T-4.7) -->
+                            <a
+                                href="{{ route('teacher.activities.reviews', $act) }}"
+                                class="px-3 py-1.5 text-xs font-bold rounded-xl bg-brand-600 hover:bg-brand-700 text-white shadow-xs transition active:scale-95 flex items-center gap-1.5"
+                                title="{{ __('Review Student Submissions (§6.4)') }}"
+                            >
+                                <span>📝</span>
+                                <span>{{ __('Reviews') }}</span>
+                                @php
+                                    $subCount = $act->submissions()->count();
+                                @endphp
+                                @if ($subCount > 0)
+                                    <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-mono font-bold">{{ $subCount }}</span>
+                                @endif
+                            </a>
+
                             <!-- Quick Status Transitions -->
                             @if ($act->isDraft())
                                 <button

@@ -100,4 +100,30 @@ class ActivitySubmissionPolicy extends BasePolicy
 
         return false;
     }
+
+    /**
+     * Determine whether the user can review/return/reopen the submission.
+     */
+    public function review(User $user, ActivitySubmission $submission): bool
+    {
+        if (! $this->belongsToSameInstitution($user, $submission)) {
+            return false;
+        }
+
+        if ($user->hasAnyRole([RoleName::SuperAdmin->value, RoleName::Admin->value])) {
+            return true;
+        }
+
+        if ($user->hasRole(RoleName::Teacher->value)) {
+            $activity = $submission->activity;
+            if (! $activity) {
+                return false;
+            }
+
+            return $activity->created_by === $user->id
+                || ($activity->schoolClass && $activity->schoolClass->teacher_id === $user->id);
+        }
+
+        return false;
+    }
 }

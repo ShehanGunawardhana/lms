@@ -26,6 +26,7 @@ use App\Livewire\Public\ClassCatalog;
 use App\Livewire\Public\LecturerDirectory;
 use App\Livewire\Public\LecturerPortfolioPage;
 use App\Livewire\Teacher\ActivityManager;
+use App\Livewire\Teacher\ActivityReviewManager;
 use App\Livewire\Teacher\PortfolioEditor;
 use App\Livewire\Teacher\TeacherDashboard;
 use App\Models\Institution;
@@ -156,6 +157,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/teacher/activities', ActivityManager::class)
         ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
         ->name('teacher.activities');
+
+    // Nursery Module Teacher Submissions Review Screen (§6.4, T-4.7)
+    Route::get('/teacher/activities/{activity}/reviews', ActivityReviewManager::class)
+        ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
+        ->name('teacher.activities.reviews');
 
     Route::get('/activities', function () {
         /** @var User|null $user */
