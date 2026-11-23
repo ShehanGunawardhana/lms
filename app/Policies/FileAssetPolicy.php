@@ -27,8 +27,8 @@ class FileAssetPolicy extends BasePolicy
             return true;
         }
 
-        // 3. For public/general materials (we will enhance in later academic tasks)
-        if ($fileAsset->purpose === 'profile_photo') {
+        // 3. Learning materials & profile photos in the same institution
+        if ($fileAsset->purpose === 'profile_photo' || $fileAsset->purpose === 'material') {
             return true;
         }
 

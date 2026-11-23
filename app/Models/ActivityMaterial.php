@@ -58,4 +58,64 @@ class ActivityMaterial extends Model
     {
         return $this->belongsTo(FileAsset::class, 'file_asset_id');
     }
+
+    public function isFile(): bool
+    {
+        return $this->type === 'file';
+    }
+
+    public function isLink(): bool
+    {
+        return $this->type === 'link';
+    }
+
+    public function downloadUrl(): ?string
+    {
+        if ($this->isFile() && $this->fileAsset) {
+            return $this->fileAsset->getDownloadUrl();
+        }
+
+        if ($this->isLink()) {
+            return $this->url;
+        }
+
+        return null;
+    }
+
+    public function formattedSize(): ?string
+    {
+        if (! $this->fileAsset || ! $this->fileAsset->size) {
+            return null;
+        }
+
+        $bytes = (int) $this->fileAsset->size;
+        if ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 1).' MB';
+        }
+
+        return number_format($bytes / 1024, 0).' KB';
+    }
+
+    public function icon(): string
+    {
+        if ($this->isLink()) {
+            return '🔗';
+        }
+
+        if (! $this->fileAsset) {
+            return '📎';
+        }
+
+        $ext = strtolower($this->fileAsset->extension);
+
+        return match ($ext) {
+            'pdf' => '📄',
+            'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg' => '🖼️',
+            'zip', 'rar', 'tar', 'gz' => '📦',
+            'mp3', 'wav', 'ogg' => '🎵',
+            'mp4', 'mov', 'webm' => '🎥',
+            'doc', 'docx' => '📝',
+            default => '📎',
+        };
+    }
 }

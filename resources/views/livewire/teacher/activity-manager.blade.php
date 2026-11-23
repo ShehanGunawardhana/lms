@@ -271,6 +271,61 @@
                                 </div>
                             @endif
 
+                            <!-- Attached Learning Materials (§6.1, T-4.3) -->
+                            @if ($act->materials->isNotEmpty())
+                                <div class="pt-2">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">📎 {{ __('Learning Materials (:count)', ['count' => $act->materials->count()]) }}</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                        @foreach ($act->materials as $mat)
+                                            <div class="p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between gap-3 group/mat hover:border-amber-400 dark:hover:border-amber-600 transition">
+                                                <div class="flex items-center gap-2.5 min-w-0">
+                                                    <span class="text-xl shrink-0">{{ $mat->icon() }}</span>
+                                                    <div class="min-w-0">
+                                                        <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title="{{ $mat->title }}">
+                                                            {{ $mat->title }}
+                                                        </p>
+                                                        <p class="text-[10px] text-slate-400 truncate">
+                                                            @if ($mat->isFile())
+                                                                {{ $mat->fileAsset?->original_name }} • {{ $mat->formattedSize() }}
+                                                            @else
+                                                                {{ parse_url($mat->url ?? '', PHP_URL_HOST) ?: $mat->url }}
+                                                            @endif
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="shrink-0">
+                                                    @if ($mat->isFile() && $mat->fileAsset)
+                                                        <a
+                                                            href="{{ $mat->downloadUrl() }}"
+                                                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 transition"
+                                                            title="{{ __('Download File') }}"
+                                                            target="_blank"
+                                                        >
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                                            <span>{{ __('Get') }}</span>
+                                                        </a>
+                                                    @elseif ($mat->isLink() && $mat->url)
+                                                        <a
+                                                            href="{{ $mat->url }}"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 transition"
+                                                            title="{{ __('Open Link') }}"
+                                                        >
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                                            <span>{{ __('Visit') }}</span>
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
                             <!-- Meta Info & Badges -->
                             <div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
                                 <span>✍️ {{ __('Created by') }} {{ $act->creator?->name ?? __('Staff') }}</span>
@@ -585,6 +640,201 @@
                                                 type="button"
                                                 class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition"
                                                 title="{{ __('Remove video') }}"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Additional Learning Materials (Files & Links) (§6.1, T-4.3) -->
+                    <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    📎 {{ __('Additional Learning Materials (Files & Links)') }}
+                                </label>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {{ __('Attach activity sheets, PDFs, images, or web links for parents and children to explore.') }}
+                                </p>
+                            </div>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300">
+                                {{ count($materials) }} {{ __('attached') }}
+                            </span>
+                        </div>
+
+                        <!-- Segmented Switcher: Upload File vs Web Link -->
+                        <div class="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-semibold w-fit">
+                            <button
+                                wire:click="$set('materialTab', 'file')"
+                                type="button"
+                                class="px-3 py-1.5 rounded-lg transition {{ $materialTab === 'file' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}"
+                            >
+                                📄 {{ __('Upload File') }}
+                            </button>
+                            <button
+                                wire:click="$set('materialTab', 'link')"
+                                type="button"
+                                class="px-3 py-1.5 rounded-lg transition {{ $materialTab === 'link' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}"
+                            >
+                                🔗 {{ __('Web Link') }}
+                            </button>
+                        </div>
+
+                        <!-- Tab 1: File Upload -->
+                        @if ($materialTab === 'file')
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                                            {{ __('Material Title (Optional)') }}
+                                        </label>
+                                        <input
+                                            wire:model="materialTitle"
+                                            type="text"
+                                            placeholder="{{ __('e.g. Rainbow Coloring Worksheet') }}"
+                                            class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                                            {{ __('Choose File (PDF, Image, Doc, Zip up to 50MB)') }}
+                                        </label>
+                                        <input
+                                            wire:model="materialFile"
+                                            type="file"
+                                            class="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-200 dark:file:bg-slate-700 file:text-slate-800 dark:file:text-slate-200 hover:file:bg-slate-300"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-1">
+                                    <span class="text-[11px] text-slate-400" wire:loading.remove wire:target="materialFile">
+                                        {{ __('Files are validated with magic-byte checks and stored privately.') }}
+                                    </span>
+                                    <span class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold" wire:loading wire:target="materialFile">
+                                        ⏳ {{ __('Uploading file...') }}
+                                    </span>
+
+                                    <button
+                                        wire:click="uploadFileMaterial"
+                                        wire:loading.attr="disabled"
+                                        type="button"
+                                        class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 text-white shadow-xs transition active:scale-95 disabled:opacity-50"
+                                    >
+                                        <span wire:loading.remove wire:target="uploadFileMaterial">📎 {{ __('Attach File') }}</span>
+                                        <span wire:loading wire:target="uploadFileMaterial">{{ __('Processing...') }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        @else
+                            <!-- Tab 2: External Link -->
+                            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                                            {{ __('Link Title') }} <span class="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            wire:model="materialTitle"
+                                            type="text"
+                                            placeholder="{{ __('e.g. Online Animal Sounds Game') }}"
+                                            class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                                            {{ __('Destination URL') }} <span class="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            wire:model="materialUrl"
+                                            type="url"
+                                            placeholder="{{ __('https://example.com/activity') }}"
+                                            class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-mono"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-end pt-1">
+                                    <button
+                                        wire:click="addLinkMaterial"
+                                        type="button"
+                                        class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 text-white shadow-xs transition active:scale-95"
+                                    >
+                                        🔗 {{ __('Attach Web Link') }}
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Material Error Feedback -->
+                        @if ($materialError)
+                            <p class="text-xs text-rose-500 font-medium flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                {{ $materialError }}
+                            </p>
+                        @endif
+
+                        <!-- Attached Materials List -->
+                        @if (! empty($materials))
+                            <div class="space-y-2 pt-1">
+                                @foreach ($materials as $mIdx => $mItem)
+                                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-3">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <span class="w-5 h-5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-black flex items-center justify-center shrink-0">
+                                                {{ $mIdx + 1 }}
+                                            </span>
+                                            <span class="text-xl shrink-0">
+                                                {{ $mItem['type'] === 'link' ? '🔗' : '📄' }}
+                                            </span>
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                                                    {{ $mItem['title'] }}
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 font-mono truncate">
+                                                    @if ($mItem['type'] === 'file')
+                                                        {{ $mItem['file_name'] }} • {{ $mItem['file_size'] }}
+                                                    @else
+                                                        {{ $mItem['url'] }}
+                                                    @endif
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <!-- Up Button -->
+                                            <button
+                                                wire:click="moveMaterialUp({{ $mIdx }})"
+                                                type="button"
+                                                class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30"
+                                                @if ($mIdx === 0) disabled @endif
+                                                title="{{ __('Move up') }}"
+                                            >
+                                                ▲
+                                            </button>
+                                            <!-- Down Button -->
+                                            <button
+                                                wire:click="moveMaterialDown({{ $mIdx }})"
+                                                type="button"
+                                                class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30"
+                                                @if ($mIdx === count($materials) - 1) disabled @endif
+                                                title="{{ __('Move down') }}"
+                                            >
+                                                ▼
+                                            </button>
+                                            <!-- Remove Button -->
+                                            <button
+                                                wire:click="removeMaterial({{ $mIdx }})"
+                                                type="button"
+                                                class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition"
+                                                title="{{ __('Remove material') }}"
                                             >
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>

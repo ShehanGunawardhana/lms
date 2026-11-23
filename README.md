@@ -880,7 +880,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 
 - [x] **T-4.1** Activities CRUD with `draft | published | closed`, target class or group, age group, publish date, instructions. (§6.1)
 - [x] **T-4.2** `YoutubeService` and component: URL validation, ID extraction for all URL forms, oEmbed title and thumbnail preview, `youtube-nocookie.com` embed, several videos per activity. (§6.1)
-- [ ] **T-4.3** Additional learning materials on an activity (files and links), added while creating it. (§6.1)
+- [x] **T-4.3** Additional learning materials on an activity (files and links), added while creating it. (§6.1)
 - [ ] **T-4.4** Parent feed and activity page: instructions, videos, materials, countdown, per-child status. (§6.6)
 - [ ] **T-4.5** Deadlines and **extensions** for everyone or per child, with log, notification and live countdown update. (§6.2)
 - [ ] **T-4.6** Parent submissions: upload with note, **edit, replace, soft delete, re-upload**, versions, lock after deadline or review, late flag. *Done when* tests cover every status transition. (§6.3)
@@ -1060,6 +1060,7 @@ Work **top to bottom**. Tick a box only when the task meets the [Definition of D
 | 2026-11-19 | T-3.7 | Year-end academic rollover engine (§7.1): AcademicRolloverService, AcademicRolloverManager Livewire wizard at /admin/academics/rollover, multi-step workflow (source/target year selection, quick-create modal, class checklist, timetable schedule replication, student rollover toggle, archival of past cycle, completion of source enrollments, target cycle activation), atomic DB transactions, audit logging & comprehensive feature tests |
 | 2026-11-19 | T-4.1 | Nursery activities CRUD suite (§6.1): activities, activity_videos, activity_materials migrations and models, ActivityStatus enum (draft, published, closed) with badges, ActivityPolicy with role/institution isolation, ActivityManager Livewire component at /teacher/activities with metrics, status/class filters, search, full create/edit modal with age group presets, step-by-step instructions, publish date, deadline, allow_late toggle, lifecycle transitions (publish, close, reopen), soft delete & comprehensive feature tests |
 | 2026-11-19 | T-4.2 | YouTube integration suite (§6.1): YoutubeService (ID extraction across watch, youtu.be, embed, shorts, live, and raw ID formats, public oEmbed title & thumbnail fetching with graceful offline fallback, health checker, youtube-nocookie.com privacy-enhanced URL generator), <x-youtube-player> Blade component with lazy loading & sandbox allow permissions, multiple video attachment & live preview in ActivityManager with drag reordering, inline thumbnail gallery & video watch modal, unit & feature tests |
+| 2026-11-23 | T-4.3 | Additional learning materials suite (§6.1): ActivityMaterial model enhancements (isFile, isLink, downloadUrl, formattedSize, icon helpers), FileAssetPolicy update allowing institutional material downloads, ActivityManager Livewire component with segmented File Upload (via FileService, 50MB limit, magic-byte checks, private UUID storage) and Web Link attachment tabs, reordering, deletion, activity card materials strip with signed download routes & external links, unit & feature tests |
 
 ### Blockers and questions
 

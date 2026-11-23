@@ -6,9 +6,11 @@ use App\Enums\ActivityStatus;
 use App\Enums\ClassKind;
 use App\Enums\RoleName;
 use App\Models\Activity;
+use App\Models\ActivityMaterial;
 use App\Models\ActivityVideo;
 use App\Models\SchoolClass;
 use App\Models\User;
+use App\Services\FileService;
 use App\Services\YoutubeService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,12 +19,13 @@ use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class ActivityManager extends Component
 {
-    use AuthorizesRequests, WithPagination;
+    use AuthorizesRequests, WithFileUploads, WithPagination;
 
     #[Url(as: 'search')]
     public string $search = '';
@@ -84,6 +87,27 @@ class ActivityManager extends Component
     public ?string $watchVideoId = null;
 
     public ?string $watchVideoTitle = null;
+
+    /**
+     * Attached learning materials for this activity:
+     * list of array{id: ?int, type: string, title: string, url: ?string, file_asset_id: ?int, file_name: ?string, file_size: ?string, sort_order: int}
+     *
+     * @var list<array{id: ?int, type: string, title: string, url: ?string, file_asset_id: ?int, file_name: ?string, file_size: ?string, sort_order: int}>
+     */
+    public array $materials = [];
+
+    public string $materialTab = 'file'; // 'file' or 'link'
+
+    public string $materialTitle = '';
+
+    public string $materialUrl = '';
+
+    /**
+     * @var mixed
+     */
+    public $materialFile = null;
+
+    public string $materialError = '';
 
     /**
      * @var list<string>
@@ -163,6 +187,12 @@ class ActivityManager extends Component
         $this->newVideoUrl = '';
         $this->pendingVideoPreview = null;
         $this->videoError = '';
+        $this->materials = [];
+        $this->materialTab = 'file';
+        $this->materialTitle = '';
+        $this->materialUrl = '';
+        $this->materialFile = null;
+        $this->materialError = '';
 
         $this->showFormModal = true;
     }
@@ -174,7 +204,7 @@ class ActivityManager extends Component
 
         /** @var Activity $activity */
         $activity = Activity::where('institution_id', $institutionId)
-            ->with('videos')
+            ->with(['videos', 'materials.fileAsset'])
             ->findOrFail($id);
         $this->authorize('update', $activity);
 
@@ -205,6 +235,27 @@ class ActivityManager extends Component
         $this->newVideoUrl = '';
         $this->pendingVideoPreview = null;
         $this->videoError = '';
+
+        /** @var list<array{id: ?int, type: string, title: string, url: ?string, file_asset_id: ?int, file_name: ?string, file_size: ?string, sort_order: int}> $loadedMaterials */
+        $loadedMaterials = [];
+        foreach ($activity->materials as $m) {
+            $loadedMaterials[] = [
+                'id' => $m->id,
+                'type' => $m->type,
+                'title' => $m->title,
+                'url' => $m->url,
+                'file_asset_id' => $m->file_asset_id,
+                'file_name' => $m->fileAsset?->original_name,
+                'file_size' => $m->formattedSize(),
+                'sort_order' => $m->sort_order,
+            ];
+        }
+        $this->materials = $loadedMaterials;
+        $this->materialTab = 'file';
+        $this->materialTitle = '';
+        $this->materialUrl = '';
+        $this->materialFile = null;
+        $this->materialError = '';
 
         $this->showFormModal = true;
     }
@@ -277,6 +328,39 @@ class ActivityManager extends Component
 
         ActivityVideo::where('activity_id', $activity->id)
             ->whereNotIn('id', $keptVideoIds)
+            ->delete();
+
+        // Synchronize learning materials
+        $keptMaterialIds = [];
+        foreach ($this->materials as $i => $matData) {
+            $mat = null;
+            if (! empty($matData['id'])) {
+                $mat = ActivityMaterial::where('activity_id', $activity->id)->find($matData['id']);
+            }
+
+            if ($mat) {
+                $mat->update([
+                    'type' => $matData['type'],
+                    'title' => $matData['title'],
+                    'url' => $matData['url'],
+                    'file_asset_id' => $matData['file_asset_id'],
+                    'sort_order' => $i,
+                ]);
+            } else {
+                $mat = ActivityMaterial::create([
+                    'activity_id' => $activity->id,
+                    'type' => $matData['type'],
+                    'title' => $matData['title'],
+                    'url' => $matData['url'],
+                    'file_asset_id' => $matData['file_asset_id'],
+                    'sort_order' => $i,
+                ]);
+            }
+            $keptMaterialIds[] = $mat->id;
+        }
+
+        ActivityMaterial::where('activity_id', $activity->id)
+            ->whereNotIn('id', $keptMaterialIds)
             ->delete();
 
         $this->showFormModal = false;
@@ -393,6 +477,139 @@ class ActivityManager extends Component
         $this->watchVideoTitle = null;
     }
 
+    public function addLinkMaterial(): void
+    {
+        $this->materialError = '';
+        $title = trim($this->materialTitle);
+        $url = trim($this->materialUrl);
+
+        if ($title === '') {
+            $this->materialError = __('Please provide a title for the learning resource.');
+
+            return;
+        }
+
+        if ($url === '' || ! filter_var($url, FILTER_VALIDATE_URL)) {
+            $this->materialError = __('Please provide a valid web link (e.g. https://...).');
+
+            return;
+        }
+
+        $this->materials[] = [
+            'id' => null,
+            'type' => 'link',
+            'title' => $title,
+            'url' => $url,
+            'file_asset_id' => null,
+            'file_name' => null,
+            'file_size' => null,
+            'sort_order' => count($this->materials),
+        ];
+
+        $this->materialTitle = '';
+        $this->materialUrl = '';
+        $this->materialError = '';
+    }
+
+    public function uploadFileMaterial(): void
+    {
+        $this->materialError = '';
+
+        if (! $this->materialFile) {
+            $this->materialError = __('Please select a file to upload.');
+
+            return;
+        }
+
+        $this->validate([
+            'materialFile' => ['required', 'file', 'max:51200'],
+        ]);
+
+        /** @var User $user */
+        $user = auth()->user();
+        $fileService = app(FileService::class);
+
+        $title = trim($this->materialTitle);
+        if ($title === '') {
+            $origName = $this->materialFile->getClientOriginalName();
+            $title = pathinfo($origName, PATHINFO_FILENAME);
+        }
+
+        try {
+            $fileAsset = $fileService->store(
+                $this->materialFile,
+                'material',
+                ['pdf', 'jpg', 'jpeg', 'png', 'zip', 'doc', 'docx', 'mp4'],
+                $user
+            );
+
+            $this->materials[] = [
+                'id' => null,
+                'type' => 'file',
+                'title' => $title,
+                'url' => null,
+                'file_asset_id' => $fileAsset->id,
+                'file_name' => $fileAsset->original_name,
+                'file_size' => $this->formatFileSize($fileAsset->size),
+                'sort_order' => count($this->materials),
+            ];
+
+            $this->materialFile = null;
+            $this->materialTitle = '';
+            $this->materialError = '';
+        } catch (\Throwable $e) {
+            $this->materialError = $e->getMessage();
+        }
+    }
+
+    public function removeMaterial(int $index): void
+    {
+        if (isset($this->materials[$index])) {
+            unset($this->materials[$index]);
+            $this->materials = array_values($this->materials);
+            foreach ($this->materials as $i => $m) {
+                $this->materials[$i]['sort_order'] = $i;
+            }
+        }
+    }
+
+    public function moveMaterialUp(int $index): void
+    {
+        if ($index > 0 && isset($this->materials[$index])) {
+            $prev = $this->materials[$index - 1];
+            $this->materials[$index - 1] = $this->materials[$index];
+            $this->materials[$index] = $prev;
+
+            $this->materials[$index - 1]['sort_order'] = $index - 1;
+            $this->materials[$index]['sort_order'] = $index;
+        }
+    }
+
+    public function moveMaterialDown(int $index): void
+    {
+        if ($index < count($this->materials) - 1 && isset($this->materials[$index])) {
+            $next = $this->materials[$index + 1];
+            $this->materials[$index + 1] = $this->materials[$index];
+            $this->materials[$index] = $next;
+
+            $this->materials[$index]['sort_order'] = $index;
+            $this->materials[$index + 1]['sort_order'] = $index + 1;
+        }
+    }
+
+    protected function formatFileSize(?int $bytes): ?string
+    {
+        if (! $bytes) {
+            return null;
+        }
+
+        if ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 1).' MB';
+        }
+
+        return number_format($bytes / 1024, 0).' KB';
+    }
+
     public function publishActivity(int $id): void
     {
         $institutionId = current_institution_id() ?? 1;
@@ -476,7 +693,7 @@ class ActivityManager extends Component
 
         // Query activities
         $query = Activity::where('institution_id', $institutionId)
-            ->with(['schoolClass', 'creator', 'videos', 'materials']);
+            ->with(['schoolClass', 'creator', 'videos', 'materials.fileAsset']);
 
         if ($this->statusFilter !== 'all') {
             $query->where('status', $this->statusFilter);
