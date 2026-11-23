@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -35,6 +36,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, ActivityVideo> $videos
  * @property-read Collection<int, ActivityMaterial> $materials
  * @property-read Collection<int, ActivitySubmission> $submissions
+ * @property-read Collection<int, DeadlineExtension> $extensions
  */
 class Activity extends Model
 {
@@ -109,6 +111,77 @@ class Activity extends Model
         return $this->hasMany(ActivitySubmission::class, 'activity_id');
     }
 
+    /**
+     * @return MorphMany<DeadlineExtension, $this>
+     */
+    public function extensions(): MorphMany
+    {
+        return $this->morphMany(DeadlineExtension::class, 'extendable')->orderByDesc('id');
+    }
+
+    public function effectiveDeadlineForStudent(?int $studentId = null): ?Carbon
+    {
+        if ($studentId !== null) {
+            /** @var DeadlineExtension|null $studentExt */
+            $studentExt = $this->extensions()
+                ->where('student_id', $studentId)
+                ->first();
+
+            if ($studentExt !== null) {
+                return $studentExt->extended_deadline;
+            }
+        }
+
+        /** @var DeadlineExtension|null $classExt */
+        $classExt = $this->extensions()
+            ->whereNull('student_id')
+            ->first();
+
+        if ($classExt !== null) {
+            return $classExt->extended_deadline;
+        }
+
+        return $this->deadline;
+    }
+
+    public function isExtendedForStudent(?int $studentId = null): bool
+    {
+        if ($studentId !== null) {
+            $hasStudentExt = $this->extensions()
+                ->where('student_id', $studentId)
+                ->exists();
+
+            if ($hasStudentExt) {
+                return true;
+            }
+        }
+
+        return $this->extensions()
+            ->whereNull('student_id')
+            ->exists();
+    }
+
+    public function latestExtensionForStudent(?int $studentId = null): ?DeadlineExtension
+    {
+        if ($studentId !== null) {
+            /** @var DeadlineExtension|null $studentExt */
+            $studentExt = $this->extensions()
+                ->where('student_id', $studentId)
+                ->first();
+
+            if ($studentExt !== null) {
+                return $studentExt;
+            }
+        }
+
+        /** @var DeadlineExtension|null $classExt */
+        $classExt = $this->extensions()
+            ->whereNull('student_id')
+            ->first();
+
+        return $classExt;
+    }
+
     public function submissionForStudent(int $studentId): ?ActivitySubmission
     {
         return $this->submissions()->where('student_id', $studentId)->latest('version')->first();
@@ -142,20 +215,32 @@ class Activity extends Model
 
     public function isPastDeadline(): bool
     {
-        if ($this->deadline === null) {
+        return $this->isPastDeadlineForStudent(null);
+    }
+
+    public function isPastDeadlineForStudent(?int $studentId = null): bool
+    {
+        $deadline = $this->effectiveDeadlineForStudent($studentId);
+
+        if ($deadline === null) {
             return false;
         }
 
-        return now()->isAfter($this->deadline);
+        return now()->isAfter($deadline);
     }
 
     public function canAcceptSubmissions(): bool
+    {
+        return $this->canAcceptSubmissionsForStudent(null);
+    }
+
+    public function canAcceptSubmissionsForStudent(?int $studentId = null): bool
     {
         if (! $this->isPublished()) {
             return false;
         }
 
-        if ($this->isPastDeadline() && ! $this->allow_late) {
+        if ($this->isPastDeadlineForStudent($studentId) && ! $this->allow_late) {
             return false;
         }
 

@@ -95,31 +95,47 @@
                 </div>
 
                 {{-- Live Countdown & Deadline Card --}}
+                @php
+                    $effectiveDeadline = $selectedChild ? $activity->effectiveDeadlineForStudent($selectedChild->id) : $activity->deadline;
+                    $isPastDeadline = $selectedChild ? $activity->isPastDeadlineForStudent($selectedChild->id) : $activity->isPastDeadline();
+                    $latestExtension = $selectedChild ? $activity->latestExtensionForStudent($selectedChild->id) : $activity->latestExtensionForStudent(null);
+                @endphp
                 <div class="lg:w-80 shrink-0">
                     <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-brand-950 text-white shadow-sm border border-slate-800 space-y-3">
                         <div class="flex items-center justify-between text-xs">
                             <span class="font-bold uppercase tracking-wider text-indigo-300">{{ __('Activity Deadline') }}</span>
-                            @if($activity->deadline && $activity->isPastDeadline())
+                            @if($latestExtension)
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                                    ✨ {{ __('Extended') }}
+                                </span>
+                            @elseif($effectiveDeadline && $isPastDeadline)
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">
                                     {{ __('Passed') }}
                                 </span>
-                            @elseif($activity->deadline)
+                            @elseif($effectiveDeadline)
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                                     {{ __('Active') }}
                                 </span>
                             @endif
                         </div>
 
-                        @if($activity->deadline)
+                        @if($effectiveDeadline)
                             <div class="py-1">
                                 <p class="text-xs text-indigo-200 mb-2">
-                                    {{ $activity->deadline->format('l, M j, Y • g:i A') }}
+                                    {{ $effectiveDeadline->format('l, M j, Y • g:i A') }}
                                 </p>
-                                <x-countdown :target="$activity->deadline" />
+                                <x-countdown :target="$effectiveDeadline" />
                             </div>
 
+                            @if($latestExtension)
+                                <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/20 text-amber-200 text-[11px] leading-relaxed">
+                                    <span class="font-bold block text-amber-300">✨ {{ __('Extended Deadline') }}</span>
+                                    <span>"{{ $latestExtension->reason }}"</span>
+                                </div>
+                            @endif
+
                             <div class="text-[11px] pt-2 border-t border-white/10 text-slate-300">
-                                @if($activity->isPastDeadline())
+                                @if($isPastDeadline)
                                     @if($activity->allow_late)
                                         <p class="text-amber-300 flex items-center gap-1">
                                             <span>⚠️</span>

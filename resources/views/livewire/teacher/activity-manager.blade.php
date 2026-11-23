@@ -204,8 +204,12 @@
 
                                 @if ($act->deadline)
                                     <span class="text-xs {{ $act->isPastDeadline() ? 'text-rose-600 font-semibold' : 'text-slate-500 dark:text-slate-400' }}">
-                                        ⏳ {{ __('Deadline:') }} {{ $act->deadline->format('M d, Y H:i') }}
-                                        @if ($act->isPastDeadline())
+                                        ⏳ {{ __('Deadline:') }} {{ $act->effectiveDeadlineForStudent()?->format('M d, Y H:i') }}
+                                        @if ($act->isExtendedForStudent())
+                                            <span class="ml-1 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                                ✨ {{ __('Extended') }}
+                                            </span>
+                                        @elseif ($act->isPastDeadline())
                                             <span class="ml-1 text-[10px] uppercase font-bold text-rose-500">({{ __('Expired') }})</span>
                                         @endif
                                     </span>
@@ -371,6 +375,29 @@
                                     title="{{ __('Reopen activity') }}"
                                 >
                                     🔄 {{ __('Reopen') }}
+                                </button>
+                            @endif
+
+                            <!-- Extend Deadline Button (§6.2, T-4.5) -->
+                            <button
+                                wire:click="openExtensionModal({{ $act->id }})"
+                                type="button"
+                                class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 transition active:scale-95 flex items-center gap-1"
+                                title="{{ __('Extend deadline for everyone or individual child (§6.2)') }}"
+                            >
+                                <span>⏰</span>
+                                <span>{{ __('Extend') }}</span>
+                            </button>
+
+                            @if ($act->extensions->isNotEmpty())
+                                <button
+                                    wire:click="openExtensionLogModal({{ $act->id }})"
+                                    type="button"
+                                    class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 transition flex items-center gap-1"
+                                    title="{{ __('View extension history and audit log') }}"
+                                >
+                                    <span>✨</span>
+                                    <span>{{ __(':count ext', ['count' => $act->extensions->count()]) }}</span>
                                 </button>
                             @endif
 
@@ -1002,6 +1029,212 @@
                         class="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
                     >
                         {{ __('Close Player') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Deadline Extension Modal (§6.2, T-4.5) -->
+    @if ($showExtensionModal && $extendingActivity)
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div>
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-0.5">
+                            <span>⏰</span>
+                            <span>{{ __('Deadline Extension (§6.2)') }}</span>
+                        </div>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white truncate max-w-sm">
+                            {{ $extendingActivity->title }}
+                        </h2>
+                    </div>
+                    <button
+                        wire:click="closeExtensionModal"
+                        type="button"
+                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                @if ($extensionError)
+                    <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
+                        {{ $extensionError }}
+                    </div>
+                @endif
+
+                <!-- Extension Target Toggle -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {{ __('Extension Scope') }} <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                        <button
+                            type="button"
+                            wire:click="$set('extensionTarget', 'everyone')"
+                            class="py-2 text-xs font-bold rounded-lg transition {{ $extensionTarget === 'everyone' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}"
+                        >
+                            👥 {{ __('All Students in Class') }}
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="$set('extensionTarget', 'individual')"
+                            class="py-2 text-xs font-bold rounded-lg transition {{ $extensionTarget === 'individual' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}"
+                        >
+                            👤 {{ __('Individual Child') }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Individual Child Select (if individual) -->
+                @if ($extensionTarget === 'individual')
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                            {{ __('Select Student') }} <span class="text-rose-500">*</span>
+                        </label>
+                        <select
+                            wire:model="extensionStudentId"
+                            class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="">-- {{ __('Choose student to extend deadline for') }} --</option>
+                            @foreach ($extendingActivity->schoolClass?->students ?? [] as $st)
+                                <option value="{{ $st->id }}">{{ $st->full_name }} ({{ $st->student_code }})</option>
+                            @endforeach
+                        </select>
+                        @error('extensionStudentId') <p class="text-[11px] text-rose-500">{{ $message }}</p> @enderror
+                    </div>
+                @endif
+
+                <!-- Current Deadline Display -->
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                    <span class="text-slate-500 dark:text-slate-400">{{ __('Current Effective Deadline:') }}</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">
+                        {{ $extendingActivity->effectiveDeadlineForStudent($extensionTarget === 'individual' ? $extensionStudentId : null)?->format('M j, Y • g:i A') ?? __('None') }}
+                    </span>
+                </div>
+
+                <!-- New Deadline -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {{ __('New Extended Deadline') }} <span class="text-rose-500">*</span>
+                    </label>
+                    <input
+                        type="datetime-local"
+                        wire:model="newDeadline"
+                        class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    />
+                    @error('newDeadline') <p class="text-[11px] text-rose-500">{{ $message }}</p> @enderror
+                </div>
+
+                <!-- Reason for Extension -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {{ __('Reason for Extension') }} <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea
+                        wire:model="extensionReason"
+                        rows="3"
+                        placeholder="{{ __('e.g., Extended by 2 days due to weather disruption or parent request. Logged in audit trail and notified to parents.') }}"
+                        class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    ></textarea>
+                    @error('extensionReason') <p class="text-[11px] text-rose-500">{{ $message }}</p> @enderror
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                        wire:click="closeExtensionModal"
+                        type="button"
+                        class="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition"
+                    >
+                        {{ __('Cancel') }}
+                    </button>
+                    <button
+                        wire:click="saveExtension"
+                        type="button"
+                        class="px-5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition active:scale-95 flex items-center gap-1.5"
+                    >
+                        <span>⏰</span>
+                        <span>{{ __('Grant Extension & Notify') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Extension Log History Modal (§6.2, T-4.5) -->
+    @if ($showExtensionLogModal && $extensionLogActivity)
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div>
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 mb-0.5">
+                            <span>📜</span>
+                            <span>{{ __('Extension Audit History (§6.2)') }}</span>
+                        </div>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white truncate max-w-sm">
+                            {{ $extensionLogActivity->title }}
+                        </h2>
+                    </div>
+                    <button
+                        wire:click="closeExtensionLogModal"
+                        type="button"
+                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="max-h-96 overflow-y-auto space-y-3">
+                    @forelse ($extensionLogActivity->extensions as $ext)
+                        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="px-2.5 py-0.5 rounded-full font-bold {{ $ext->student ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300' }}">
+                                    {{ $ext->student ? '👤 '.$ext->student->full_name : '👥 '.__('All Students in Class') }}
+                                </span>
+                                <span class="text-slate-400 text-[11px]">{{ $ext->created_at?->diffForHumans() }}</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+                                <div>
+                                    <span class="text-slate-400 block text-[10px] uppercase font-bold">{{ __('Previous Deadline') }}</span>
+                                    <span class="font-medium text-slate-600 dark:text-slate-300 line-through">
+                                        {{ $ext->original_deadline?->format('M j, Y • g:i A') ?? __('None') }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-emerald-600 dark:text-emerald-400 block text-[10px] uppercase font-bold">{{ __('Extended Deadline') }}</span>
+                                    <span class="font-bold text-emerald-700 dark:text-emerald-300">
+                                        {{ $ext->extended_deadline->format('M j, Y • g:i A') }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="pt-1 text-xs text-slate-700 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800">
+                                <span class="font-bold text-slate-500">{{ __('Reason:') }}</span>
+                                <span class="italic">"{{ $ext->reason }}"</span>
+                            </div>
+
+                            <div class="text-[10px] text-slate-400 flex items-center justify-between">
+                                <span>✍️ {{ __('Granted by') }} {{ $ext->extendedBy?->name ?? __('Staff') }}</span>
+                                <span>{{ $ext->created_at?->format('Y-m-d H:i') }}</span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="p-8 text-center text-xs text-slate-400">
+                            {{ __('No deadline extensions have been recorded for this activity.') }}
+                        </div>
+                    @endforelse
+                </div>
+
+                <div class="flex justify-end pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                        wire:click="closeExtensionLogModal"
+                        type="button"
+                        class="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
+                    >
+                        {{ __('Close History') }}
                     </button>
                 </div>
             </div>

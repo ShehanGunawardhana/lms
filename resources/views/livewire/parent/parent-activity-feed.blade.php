@@ -231,13 +231,24 @@
 
                             {{-- Live Countdown / Deadline Strip --}}
                             <div class="p-5 pt-3">
-                                @if($activity->deadline)
+                                @php
+                                    $effectiveDeadline = $selectedChild ? $activity->effectiveDeadlineForStudent($selectedChild->id) : $activity->deadline;
+                                    $isExtended = $selectedChild ? $activity->isExtendedForStudent($selectedChild->id) : false;
+                                @endphp
+                                @if($effectiveDeadline)
                                     <div class="mb-4">
                                         <div class="flex items-center justify-between text-[11px] mb-1.5">
-                                            <span class="text-slate-400 font-semibold">{{ __('Due Date:') }}</span>
-                                            <span class="font-bold text-slate-700">{{ $activity->deadline->format('M j, Y • g:i A') }}</span>
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="text-slate-400 font-semibold">{{ __('Due Date:') }}</span>
+                                                @if($isExtended)
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-black uppercase bg-amber-100 text-amber-800 border border-amber-300">
+                                                        ✨ {{ __('Extended') }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <span class="font-bold text-slate-700">{{ $effectiveDeadline->format('M j, Y • g:i A') }}</span>
                                         </div>
-                                        <x-countdown :target="$activity->deadline" />
+                                        <x-countdown :target="$effectiveDeadline" />
                                     </div>
                                 @else
                                     <div class="mb-4 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs text-slate-500">

@@ -132,6 +132,14 @@ class Student extends Model
         return $this->hasMany(ActivitySubmission::class);
     }
 
+    /**
+     * @return HasMany<DeadlineExtension, $this>
+     */
+    public function deadlineExtensions(): HasMany
+    {
+        return $this->hasMany(DeadlineExtension::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->last_name}");

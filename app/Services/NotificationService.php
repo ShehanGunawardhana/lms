@@ -20,6 +20,7 @@ class NotificationService
         'account_rejected' => ['mail', 'database'],
         'activity_material' => ['database', 'mail'],
         'deadline_reminder' => ['database', 'mail', 'sms'],
+        'deadline_extended' => ['database', 'mail', 'sms'],
         'submission_reviewed' => ['database', 'mail'],
         'payment_approved' => ['mail', 'database', 'sms'],
         'payment_rejected' => ['mail', 'database', 'sms'],

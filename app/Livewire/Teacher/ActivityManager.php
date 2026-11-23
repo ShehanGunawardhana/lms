@@ -10,6 +10,7 @@ use App\Models\ActivityMaterial;
 use App\Models\ActivityVideo;
 use App\Models\SchoolClass;
 use App\Models\User;
+use App\Services\DeadlineExtensionService;
 use App\Services\FileService;
 use App\Services\YoutubeService;
 use Illuminate\Contracts\View\View;
@@ -108,6 +109,26 @@ class ActivityManager extends Component
     public $materialFile = null;
 
     public string $materialError = '';
+
+    // Extension Modal state (§6.2, T-4.5)
+    public bool $showExtensionModal = false;
+
+    public ?int $extendingActivityId = null;
+
+    public string $extensionTarget = 'everyone'; // 'everyone' or 'individual'
+
+    public ?int $extensionStudentId = null;
+
+    public string $newDeadline = '';
+
+    public string $extensionReason = '';
+
+    public string $extensionError = '';
+
+    // Extension Log History Modal state
+    public bool $showExtensionLogModal = false;
+
+    public ?int $extensionLogActivityId = null;
 
     /**
      * @var list<string>
@@ -674,6 +695,116 @@ class ActivityManager extends Component
         session()->flash('success', __("Activity ':title' deleted.", ['title' => $title]));
     }
 
+    public function openExtensionModal(int $activityId): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        /** @var Activity $activity */
+        $activity = Activity::where('institution_id', $institutionId)->findOrFail($activityId);
+        $this->authorize('update', $activity);
+
+        $this->extendingActivityId = $activityId;
+        $this->extensionTarget = 'everyone';
+        $this->extensionStudentId = null;
+        $this->extensionReason = '';
+        $this->extensionError = '';
+
+        $effectiveDeadline = $activity->effectiveDeadlineForStudent();
+        $this->newDeadline = $effectiveDeadline !== null
+            ? $effectiveDeadline->copy()->addDays(2)->format('Y-m-d\TH:i')
+            : now()->addDays(2)->format('Y-m-d\TH:i');
+
+        $this->showExtensionModal = true;
+    }
+
+    public function closeExtensionModal(): void
+    {
+        $this->showExtensionModal = false;
+        $this->extendingActivityId = null;
+        $this->extensionTarget = 'everyone';
+        $this->extensionStudentId = null;
+        $this->newDeadline = '';
+        $this->extensionReason = '';
+        $this->extensionError = '';
+    }
+
+    public function saveExtension(?DeadlineExtensionService $extensionService = null): void
+    {
+        $extensionService ??= app(DeadlineExtensionService::class);
+
+        if ($this->extendingActivityId === null) {
+            return;
+        }
+
+        $institutionId = current_institution_id() ?? 1;
+        /** @var Activity $activity */
+        $activity = Activity::where('institution_id', $institutionId)->findOrFail($this->extendingActivityId);
+        $this->authorize('update', $activity);
+
+        $rules = [
+            'extensionTarget' => ['required', 'in:everyone,individual'],
+            'newDeadline' => ['required', 'date'],
+            'extensionReason' => ['required', 'string', 'min:5', 'max:500'],
+        ];
+
+        if ($this->extensionTarget === 'individual') {
+            $rules['extensionStudentId'] = ['required', 'integer', 'exists:students,id'];
+        }
+
+        $this->validate($rules);
+
+        $newDeadlineCarbon = Carbon::parse($this->newDeadline);
+        $currentDeadline = $activity->effectiveDeadlineForStudent($this->extensionTarget === 'individual' ? $this->extensionStudentId : null);
+
+        if ($currentDeadline !== null && $newDeadlineCarbon->lte($currentDeadline)) {
+            $this->extensionError = __('The new deadline must be strictly after the current deadline (:date).', [
+                'date' => $currentDeadline->format('M j, Y • g:i A'),
+            ]);
+
+            return;
+        }
+
+        if ($newDeadlineCarbon->isPast()) {
+            $this->extensionError = __('The new extended deadline cannot be in the past.');
+
+            return;
+        }
+
+        try {
+            /** @var User $currentUser */
+            $currentUser = auth()->user();
+
+            $extensionService->extendActivityDeadline(
+                activity: $activity,
+                extendedBy: $currentUser,
+                newDeadline: $newDeadlineCarbon,
+                reason: $this->extensionReason,
+                studentId: $this->extensionTarget === 'individual' ? $this->extensionStudentId : null,
+            );
+
+            session()->flash('success', __('Deadline extension granted successfully and parents notified.'));
+            $this->closeExtensionModal();
+        } catch (\Throwable $e) {
+            $this->extensionError = $e->getMessage();
+        }
+    }
+
+    public function openExtensionLogModal(int $activityId): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        /** @var Activity $activity */
+        $activity = Activity::where('institution_id', $institutionId)->findOrFail($activityId);
+        $this->authorize('view', $activity);
+
+        $this->extensionLogActivityId = $activityId;
+        $this->showExtensionLogModal = true;
+    }
+
+    public function closeExtensionLogModal(): void
+    {
+        $this->showExtensionLogModal = false;
+        $this->extensionLogActivityId = null;
+    }
+
     public function render(): View
     {
         $institutionId = current_institution_id() ?? 1;
@@ -693,7 +824,7 @@ class ActivityManager extends Component
 
         // Query activities
         $query = Activity::where('institution_id', $institutionId)
-            ->with(['schoolClass', 'creator', 'videos', 'materials.fileAsset']);
+            ->with(['schoolClass', 'creator', 'videos', 'materials.fileAsset', 'extensions.student', 'extensions.extendedBy']);
 
         if ($this->statusFilter !== 'all') {
             $query->where('status', $this->statusFilter);
@@ -722,10 +853,22 @@ class ActivityManager extends Component
             'closed' => Activity::where('institution_id', $institutionId)->where('status', ActivityStatus::Closed->value)->count(),
         ];
 
+        /** @var Activity|null $extendingActivity */
+        $extendingActivity = $this->extendingActivityId !== null
+            ? Activity::with('schoolClass.students')->where('institution_id', $institutionId)->find($this->extendingActivityId)
+            : null;
+
+        /** @var Activity|null $extensionLogActivity */
+        $extensionLogActivity = $this->extensionLogActivityId !== null
+            ? Activity::with(['extensions.student', 'extensions.extendedBy'])->where('institution_id', $institutionId)->find($this->extensionLogActivityId)
+            : null;
+
         return view('livewire.teacher.activity-manager', [
             'activities' => $activities,
             'classes' => $classes,
             'stats' => $stats,
+            'extendingActivity' => $extendingActivity,
+            'extensionLogActivity' => $extensionLogActivity,
         ]);
     }
 }
