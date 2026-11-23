@@ -4,6 +4,8 @@ namespace App\Policies;
 
 use App\Enums\RoleName;
 use App\Models\Activity;
+use App\Models\Guardian;
+use App\Models\Student;
 use App\Models\User;
 
 class ActivityPolicy extends BasePolicy
@@ -47,7 +49,43 @@ class ActivityPolicy extends BasePolicy
             return true;
         }
 
-        // Students & parents can only see published or closed activities
+        if ($user->hasRole(RoleName::Parent->value)) {
+            if ($activity->isDraft()) {
+                return false;
+            }
+
+            /** @var Guardian|null $guardian */
+            $guardian = $user->guardian ?? Guardian::where('user_id', $user->id)->first();
+            if (! $guardian) {
+                return false;
+            }
+
+            return $guardian->students()
+                ->whereHas('enrollments', function ($query) use ($activity) {
+                    $query->where('class_id', $activity->class_id)
+                        ->where('status', 'active');
+                })
+                ->exists();
+        }
+
+        if ($user->hasRole(RoleName::Student->value)) {
+            if ($activity->isDraft()) {
+                return false;
+            }
+
+            /** @var Student|null $student */
+            $student = $user->student ?? Student::where('user_id', $user->id)->first();
+            if (! $student) {
+                return false;
+            }
+
+            return $student->enrollments()
+                ->where('class_id', $activity->class_id)
+                ->where('status', 'active')
+                ->exists();
+        }
+
+        // Other authorized users can only see published or closed activities
         return ! $activity->isDraft();
     }
 

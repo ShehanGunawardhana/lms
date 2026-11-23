@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ActivityStatus;
+use App\Enums\ActivitySubmissionStatus;
 use App\Support\Traits\BelongsToInstitution;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,6 +34,7 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $creator
  * @property-read Collection<int, ActivityVideo> $videos
  * @property-read Collection<int, ActivityMaterial> $materials
+ * @property-read Collection<int, ActivitySubmission> $submissions
  */
 class Activity extends Model
 {
@@ -97,6 +99,30 @@ class Activity extends Model
     public function materials(): HasMany
     {
         return $this->hasMany(ActivityMaterial::class, 'activity_id')->orderBy('sort_order');
+    }
+
+    /**
+     * @return HasMany<ActivitySubmission, $this>
+     */
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(ActivitySubmission::class, 'activity_id');
+    }
+
+    public function submissionForStudent(int $studentId): ?ActivitySubmission
+    {
+        return $this->submissions()->where('student_id', $studentId)->latest('version')->first();
+    }
+
+    public function statusForStudent(int $studentId): ActivitySubmissionStatus
+    {
+        $submission = $this->submissionForStudent($studentId);
+
+        if ($submission === null) {
+            return ActivitySubmissionStatus::NotStarted;
+        }
+
+        return $submission->status;
     }
 
     public function isDraft(): bool

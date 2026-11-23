@@ -124,6 +124,14 @@ class Student extends Model
         return $this->hasMany(Enrollment::class);
     }
 
+    /**
+     * @return HasMany<ActivitySubmission, $this>
+     */
+    public function activitySubmissions(): HasMany
+    {
+        return $this->hasMany(ActivitySubmission::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->last_name}");

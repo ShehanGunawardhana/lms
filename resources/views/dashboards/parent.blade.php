@@ -37,11 +37,13 @@
                 <p class="text-[10px] text-slate-400 mt-0.5">Teacher Sarah Jenkins</p>
             </x-card>
 
-            <x-card class="border-l-4 border-l-amber-500">
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ __('Activities Due') }}</p>
-                <p class="text-2xl font-black text-amber-600 mt-1">2</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Handprint art & alphabet match</p>
-            </x-card>
+            <a href="{{ route('parent.activities') }}" class="block group">
+                <x-card class="border-l-4 border-l-amber-500 hover:border-amber-600 transition-colors">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ __('Activities Due') }}</p>
+                    <p class="text-2xl font-black text-amber-600 mt-1">2</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5 group-hover:text-brand-600 transition-colors">Handprint art & alphabet match &rarr;</p>
+                </x-card>
+            </a>
 
             <x-card class="border-l-4 border-l-purple-500">
                 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ __('Monthly Fee') }}</p>
@@ -53,7 +55,15 @@
         <!-- Weekly Activity Feed (§6.6) -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-4">
-                <x-card :title="__('Weekly Nursery Learning Feed')">
+                <x-card>
+                    <x-slot name="header">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-bold text-slate-900">{{ __('Weekly Nursery Learning Feed') }}</h3>
+                            <a href="{{ route('parent.activities') }}" class="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors">
+                                {{ __('Explore All Activities') }} &rarr;
+                            </a>
+                        </div>
+                    </x-slot>
                     <div class="space-y-4">
                         <!-- Activity Drop 1 -->
                         <div class="p-4 rounded-2xl border border-slate-200 bg-white hover:border-brand-200 transition-colors space-y-3">

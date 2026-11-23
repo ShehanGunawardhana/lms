@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\RoleName;
 use App\Http\Controllers\ChunkUploadController;
 use App\Http\Controllers\FileDownloadController;
 use App\Http\Controllers\LocaleController;
@@ -18,6 +19,8 @@ use App\Livewire\Admin\TeacherInvite;
 use App\Livewire\Admin\UserManager;
 use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
+use App\Livewire\Parent\ParentActivityFeed;
+use App\Livewire\Parent\ParentActivityShow;
 use App\Livewire\Profile\UserProfileManager;
 use App\Livewire\Public\ClassCatalog;
 use App\Livewire\Public\LecturerDirectory;
@@ -154,9 +157,24 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
         ->name('teacher.activities');
 
-    Route::get('/activities', ActivityManager::class)
-        ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
-        ->name('activities.index');
+    Route::get('/activities', function () {
+        /** @var User|null $user */
+        $user = auth()->user();
+        if ($user !== null && $user->hasRole(RoleName::Parent->value)) {
+            return redirect()->route('parent.activities');
+        }
+
+        return redirect()->route('teacher.activities');
+    })->middleware(['auth'])->name('activities.index');
+
+    // Nursery Module Parent Activity Feed & Show (§6.6, T-4.4)
+    Route::get('/parent/activities', ParentActivityFeed::class)
+        ->middleware('role:parent')
+        ->name('parent.activities');
+
+    Route::get('/parent/activities/{activity}', ParentActivityShow::class)
+        ->middleware('role:parent')
+        ->name('parent.activities.show');
 
     // Lecturer Portfolio Editor (§5.5, T-2.2)
     Route::get('/teacher/portfolio', PortfolioEditor::class)

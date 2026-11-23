@@ -1,11 +1,19 @@
 @props([
-    'targetDate',
+    'targetDate' => null,
+    'target' => null,
     'label' => __('Deadline remaining'),
 ])
 
+@php
+    $finalDate = $targetDate ?? $target;
+    if ($finalDate instanceof \DateTimeInterface) {
+        $finalDate = $finalDate->toIso8601String();
+    }
+@endphp
+
 <div 
     x-data="{
-        target: new Date('{{ $targetDate }}').getTime(),
+        target: new Date('{{ $finalDate }}').getTime(),
         now: new Date().getTime(),
         days: 0,
         hours: 0,

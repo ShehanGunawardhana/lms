@@ -118,4 +118,14 @@ class ActivityMaterial extends Model
             default => '📎',
         };
     }
+
+    public function getIconAttribute(): string
+    {
+        return $this->icon();
+    }
+
+    public function getFormattedSizeAttribute(): ?string
+    {
+        return $this->formattedSize();
+    }
 }

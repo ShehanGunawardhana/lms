@@ -145,4 +145,9 @@ class SchoolClass extends Model
     {
         return $this->availableSeats() === 0;
     }
+
+    public function getNameAttribute(): string
+    {
+        return $this->title;
+    }
 }
