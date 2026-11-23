@@ -241,9 +241,9 @@
 
     <!-- Create / Edit Student Modal -->
     @if ($showStudentModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5 animate-fade-in" @click.away="$wire.closeStudentModal()">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full my-auto max-h-[92vh] flex flex-col overflow-hidden animate-fade-in" @click.away="$wire.closeStudentModal()">
+                <div class="px-6 py-4 flex items-center justify-between border-b border-slate-100 shrink-0">
                     <h3 class="text-base font-bold text-slate-900">
                         {{ $editingStudentId ? __('Edit Child Details') : __('Enroll New Child') }}
                     </h3>
@@ -252,79 +252,81 @@
                     </button>
                 </div>
 
-                <form wire:submit.prevent="saveStudent" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('First Name') }} *</label>
-                            <input type="text" wire:model="firstName" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600" />
-                            @error('firstName') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                <form wire:submit.prevent="saveStudent" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('First Name') }} *</label>
+                                <input type="text" wire:model="firstName" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600" />
+                                @error('firstName') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Last Name') }} *</label>
+                                <input type="text" wire:model="lastName" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600" />
+                                @error('lastName') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Last Name') }} *</label>
-                            <input type="text" wire:model="lastName" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600" />
-                            @error('lastName') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Date of Birth') }} *</label>
-                            <input type="date" wire:model="dob" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600" />
-                            @error('dob') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Date of Birth') }} *</label>
+                                <input type="date" wire:model="dob" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600" />
+                                @error('dob') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Gender') }}</label>
+                                <select wire:model="gender" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
+                                    <option value="male">{{ __('Male') }}</option>
+                                    <option value="female">{{ __('Female') }}</option>
+                                    <option value="other">{{ __('Other') }}</option>
+                                </select>
+                            </div>
                         </div>
+
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Gender') }}</label>
-                            <select wire:model="gender" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
-                                <option value="male">{{ __('Male') }}</option>
-                                <option value="female">{{ __('Female') }}</option>
-                                <option value="other">{{ __('Other') }}</option>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Status') }}</label>
+                            <select wire:model="status" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
+                                <option value="active">{{ __('Active') }}</option>
+                                <option value="registered">{{ __('Registered') }}</option>
+                                <option value="suspended">{{ __('Suspended') }}</option>
+                                <option value="left">{{ __('Left') }}</option>
+                            </select>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-100">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Assign Primary Guardian') }}</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="col-span-2">
+                                    <select wire:model="selectedGuardianId" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
+                                        <option value="">{{ __('Select Registered Guardian...') }}</option>
+                                        @foreach ($guardians as $g)
+                                            <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->user?->phone ?? 'no phone' }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <select wire:model="guardianRelationship" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
+                                        <option value="mother">{{ __('Mother') }}</option>
+                                        <option value="father">{{ __('Father') }}</option>
+                                        <option value="legal_guardian">{{ __('Guardian') }}</option>
+                                        <option value="grandparent">{{ __('Grandparent') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Initial Class / Group Placement') }}</label>
+                            <select wire:model="selectedClassId" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
+                                <option value="">{{ __('Select Nursery Group...') }}</option>
+                                @foreach ($classes as $c)
+                                    <option value="{{ $c->id }}">{{ $c->title }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Status') }}</label>
-                        <select wire:model="status" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
-                            <option value="active">{{ __('Active') }}</option>
-                            <option value="registered">{{ __('Registered') }}</option>
-                            <option value="suspended">{{ __('Suspended') }}</option>
-                            <option value="left">{{ __('Left') }}</option>
-                        </select>
-                    </div>
-
-                    <div class="pt-2 border-t border-slate-100">
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Assign Primary Guardian') }}</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div class="col-span-2">
-                                <select wire:model="selectedGuardianId" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
-                                    <option value="">{{ __('Select Registered Guardian...') }}</option>
-                                    @foreach ($guardians as $g)
-                                        <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->user?->phone ?? 'no phone' }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <select wire:model="guardianRelationship" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
-                                    <option value="mother">{{ __('Mother') }}</option>
-                                    <option value="father">{{ __('Father') }}</option>
-                                    <option value="legal_guardian">{{ __('Guardian') }}</option>
-                                    <option value="grandparent">{{ __('Grandparent') }}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Initial Class / Group Placement') }}</label>
-                        <select wire:model="selectedClassId" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
-                            <option value="">{{ __('Select Nursery Group...') }}</option>
-                            @foreach ($classes as $c)
-                                <option value="{{ $c->id }}">{{ $c->title }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <div class="px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100 shrink-0 bg-slate-50/80">
                         <button type="button" wire:click="closeStudentModal" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer">
                             {{ __('Cancel') }}
                         </button>
@@ -339,44 +341,46 @@
 
     <!-- Link Additional Guardian Modal -->
     @if ($showLinkGuardianModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-fade-in" @click.away="$wire.closeLinkGuardianModal()">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full my-auto max-h-[92vh] flex flex-col overflow-hidden animate-fade-in" @click.away="$wire.closeLinkGuardianModal()">
+                <div class="px-6 py-4 flex items-center justify-between border-b border-slate-100 shrink-0">
                     <h3 class="text-base font-bold text-slate-900">{{ __('Link Additional Guardian (§6.5)') }}</h3>
                     <button type="button" wire:click="closeLinkGuardianModal" class="text-slate-400 hover:text-slate-600">
                         &times;
                     </button>
                 </div>
 
-                <form wire:submit.prevent="linkGuardian" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Select Guardian / Parent') }} *</label>
-                        <select wire:model="linkGuardianId" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
-                            <option value="">{{ __('Select Guardian...') }}</option>
-                            @foreach ($guardians as $g)
-                                <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->user?->phone ?? 'no phone' }})</option>
-                            @endforeach
-                        </select>
-                        @error('linkGuardianId') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                <form wire:submit.prevent="linkGuardian" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Select Guardian / Parent') }} *</label>
+                            <select wire:model="linkGuardianId" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
+                                <option value="">{{ __('Select Guardian...') }}</option>
+                                @foreach ($guardians as $g)
+                                    <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->user?->phone ?? 'no phone' }})</option>
+                                @endforeach
+                            </select>
+                            @error('linkGuardianId') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Relationship to Child') }} *</label>
+                            <select wire:model="linkRelationship" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
+                                <option value="father">{{ __('Father') }}</option>
+                                <option value="mother">{{ __('Mother') }}</option>
+                                <option value="legal_guardian">{{ __('Legal Guardian') }}</option>
+                                <option value="grandparent">{{ __('Grandparent') }}</option>
+                                <option value="authorized_pickup">{{ __('Authorized Pickup / Relative') }}</option>
+                            </select>
+                        </div>
+
+                        <label class="flex items-center gap-2 cursor-pointer pt-1">
+                            <input type="checkbox" wire:model="isPrimary" class="rounded text-brand-600 focus:ring-brand-500 border-slate-300 w-4 h-4" />
+                            <span class="text-xs text-slate-700 font-semibold">{{ __('Designate as Primary Guardian') }}</span>
+                        </label>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Relationship to Child') }} *</label>
-                        <select wire:model="linkRelationship" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
-                            <option value="father">{{ __('Father') }}</option>
-                            <option value="mother">{{ __('Mother') }}</option>
-                            <option value="legal_guardian">{{ __('Legal Guardian') }}</option>
-                            <option value="grandparent">{{ __('Grandparent') }}</option>
-                            <option value="authorized_pickup">{{ __('Authorized Pickup / Relative') }}</option>
-                        </select>
-                    </div>
-
-                    <label class="flex items-center gap-2 cursor-pointer pt-1">
-                        <input type="checkbox" wire:model="isPrimary" class="rounded text-brand-600 focus:ring-brand-500 border-slate-300 w-4 h-4" />
-                        <span class="text-xs text-slate-700 font-semibold">{{ __('Designate as Primary Guardian') }}</span>
-                    </label>
-
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <div class="px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100 shrink-0 bg-slate-50/80">
                         <button type="button" wire:click="closeLinkGuardianModal" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer">
                             {{ __('Cancel') }}
                         </button>
@@ -391,30 +395,32 @@
 
     <!-- Enroll Class Modal -->
     @if ($showEnrollModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-5 animate-fade-in" @click.away="$wire.closeEnrollModal()">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full my-auto max-h-[92vh] flex flex-col overflow-hidden animate-fade-in" @click.away="$wire.closeEnrollModal()">
+                <div class="px-6 py-4 flex items-center justify-between border-b border-slate-100 shrink-0">
                     <h3 class="text-base font-bold text-slate-900">{{ __('Enroll into Nursery Class') }}</h3>
                     <button type="button" wire:click="closeEnrollModal" class="text-slate-400 hover:text-slate-600">
                         &times;
                     </button>
                 </div>
 
-                <form wire:submit.prevent="enrollClass" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Select Nursery Group') }} *</label>
-                        <select wire:model="enrollClassId" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
-                            <option value="">{{ __('Select Group...') }}</option>
-                            @foreach ($classes as $c)
-                                <option value="{{ $c->id }}">
-                                    {{ $c->title }} ({{ __('Capacity') }}: {{ $c->capacity }}, {{ __('Available') }}: {{ $c->availableSeats() }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('enrollClassId') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                <form wire:submit.prevent="enrollClass" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Select Nursery Group') }} *</label>
+                            <select wire:model="enrollClassId" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600">
+                                <option value="">{{ __('Select Group...') }}</option>
+                                @foreach ($classes as $c)
+                                    <option value="{{ $c->id }}">
+                                        {{ $c->title }} ({{ __('Capacity') }}: {{ $c->capacity }}, {{ __('Available') }}: {{ $c->availableSeats() }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('enrollClassId') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                        </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <div class="px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100 shrink-0 bg-slate-50/80">
                         <button type="button" wire:click="closeEnrollModal" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer">
                             {{ __('Cancel') }}
                         </button>

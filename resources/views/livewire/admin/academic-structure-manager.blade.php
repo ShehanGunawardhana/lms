@@ -680,16 +680,17 @@
     <!-- MODAL 1: ACADEMIC YEAR CREATE / EDIT -->
     <!-- ============================================================== -->
     @if ($showYearModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <h3 class="text-lg font-extrabold text-slate-900">
                         {{ $editingYearId ? __('Edit Academic Year') : __('Create Academic Year') }}
                     </h3>
                     <button type="button" wire:click="closeYearModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <form wire:submit="saveYear" class="space-y-4">
+                <form wire:submit="saveYear" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Year Name') }} <span class="text-rose-500">*</span></label>
                         <input 
@@ -765,7 +766,9 @@
                         </label>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    </div>
+
+                    <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeYearModal"
@@ -788,16 +791,17 @@
     <!-- MODAL 2: TERM CREATE / EDIT -->
     <!-- ============================================================== -->
     @if ($showTermModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <h3 class="text-lg font-extrabold text-slate-900">
                         {{ $editingTermId ? __('Edit Term / Semester') : __('Create Term / Semester') }}
                     </h3>
                     <button type="button" wire:click="closeTermModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <form wire:submit="saveTerm" class="space-y-4">
+                <form wire:submit="saveTerm" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Academic Year') }} <span class="text-rose-500">*</span></label>
                         <select 
@@ -852,7 +856,9 @@
                         </label>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    </div>
+
+                    <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeTermModal"
@@ -875,16 +881,17 @@
     <!-- MODAL 3: BATCH / GROUP CREATE / EDIT -->
     <!-- ============================================================== -->
     @if ($showBatchModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <h3 class="text-lg font-extrabold text-slate-900">
                         {{ $editingBatchId ? __('Edit Batch or Group') : __('Create Batch or Group') }}
                     </h3>
                     <button type="button" wire:click="closeBatchModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <form wire:submit="saveBatch" class="space-y-4">
+                <form wire:submit="saveBatch" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Batch / Group Name') }} <span class="text-rose-500">*</span></label>
                         <input 
@@ -954,7 +961,9 @@
                         @error('batchDescription') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    </div>
+
+                    <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeBatchModal"
@@ -977,16 +986,17 @@
     <!-- MODAL 4: HOLIDAY CREATE / EDIT -->
     <!-- ============================================================== -->
     @if ($showHolidayModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <h3 class="text-lg font-extrabold text-slate-900">
                         {{ $editingHolidayId ? __('Edit Holiday / Closure') : __('New Holiday / Closure') }}
                     </h3>
                     <button type="button" wire:click="closeHolidayModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <form wire:submit="saveHoliday" class="space-y-4">
+                <form wire:submit="saveHoliday" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Holiday Name') }} <span class="text-rose-500">*</span></label>
                         <input 
@@ -1054,7 +1064,9 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    </div>
+
+                    <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeHolidayModal"

@@ -300,31 +300,37 @@
     </div>
 
     <!-- Suspend User Modal -->
+    <!-- Suspend User Modal -->
     @if ($showSuspendModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold">
-                        ⚠️
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-md w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold">
+                            ⚠️
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">{{ __('Suspend User Account') }}</h3>
+                            <p class="text-xs text-slate-500">{{ __('This will immediately revoke system access.') }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-base font-black text-slate-900">{{ __('Suspend User Account') }}</h3>
-                        <p class="text-xs text-slate-500">{{ __('This will immediately revoke system access.') }}</p>
+                    <button type="button" wire:click="closeSuspendModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
+                </div>
+
+                <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">{{ __('Reason for Suspension (Mandatory)') }}</label>
+                        <textarea wire:model="suspensionReason"
+                                  rows="3"
+                                  class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                                  placeholder="{{ __('Explain why this user account is being suspended (recorded in audit log)...') }}"></textarea>
+                        @error('suspensionReason')
+                            <p class="text-[11px] text-rose-600 font-bold">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="block text-xs font-bold text-slate-700">{{ __('Reason for Suspension (Mandatory)') }}</label>
-                    <textarea wire:model="suspensionReason"
-                              rows="3"
-                              class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-                              placeholder="{{ __('Explain why this user account is being suspended (recorded in audit log)...') }}"></textarea>
-                    @error('suspensionReason')
-                        <p class="text-[11px] text-rose-600 font-bold">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="flex items-center justify-end gap-2 pt-2">
+                <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-2 bg-slate-50/80">
                     <button type="button"
                             wire:click="closeSuspendModal"
                             class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">
@@ -341,28 +347,34 @@
     @endif
 
     <!-- Deactivate User Modal -->
+    <!-- Deactivate User Modal -->
     @if ($showDeactivateModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold">
-                        🚫
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-md w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold">
+                            🚫
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">{{ __('Deactivate User Account') }}</h3>
+                            <p class="text-xs text-slate-500">{{ __('The user will be archived and unable to sign in.') }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-base font-black text-slate-900">{{ __('Deactivate User Account') }}</h3>
-                        <p class="text-xs text-slate-500">{{ __('The user will be archived and unable to sign in.') }}</p>
+                    <button type="button" wire:click="closeDeactivateModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
+                </div>
+
+                <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-700">{{ __('Deactivation Notes (Optional)') }}</label>
+                        <textarea wire:model="deactivationReason"
+                                  rows="3"
+                                  class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500"
+                                  placeholder="{{ __('Add any archival or departure notes...') }}"></textarea>
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="block text-xs font-bold text-slate-700">{{ __('Deactivation Notes (Optional)') }}</label>
-                    <textarea wire:model="deactivationReason"
-                              rows="3"
-                              class="w-full text-xs rounded-xl border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500"
-                              placeholder="{{ __('Add any archival or departure notes...') }}"></textarea>
-                </div>
-
-                <div class="flex items-center justify-end gap-2 pt-2">
+                <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-2 bg-slate-50/80">
                     <button type="button"
                             wire:click="closeDeactivateModal"
                             class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">

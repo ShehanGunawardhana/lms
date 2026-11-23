@@ -356,9 +356,9 @@
     <!-- ENROLL STUDENT MODAL WITH LIVE CLASH DETECTION -->
     <!-- ============================================================== -->
     @if ($showEnrollModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <div>
                         <h3 class="text-lg font-extrabold text-slate-900">{{ __('Enroll Student in Class') }}</h3>
                         <p class="text-xs text-slate-500">{{ $class->title }} ({{ $class->subject }})</p>
@@ -366,7 +366,8 @@
                     <button type="button" wire:click="closeEnrollModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <form wire:submit="enrollStudent" class="space-y-4">
+                <form wire:submit="enrollStudent" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
                     <!-- Student Selector -->
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Select Student') }} <span class="text-rose-500">*</span></label>
@@ -513,7 +514,9 @@
                         @error('enrollNotes') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    </div>
+
+                    <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeEnrollModal"
@@ -536,14 +539,14 @@
     <!-- DROP ENROLLMENT MODAL -->
     <!-- ============================================================== -->
     @if ($showDropModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-md w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <h3 class="text-lg font-extrabold text-slate-900">{{ __('Drop Student Enrollment') }}</h3>
                     <button type="button" wire:click="closeDropModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <div class="space-y-4">
+                <div class="p-6 overflow-y-auto flex-1 space-y-4">
                     <p class="text-xs text-slate-600">
                         {{ __('Are you sure you want to drop this student from') }} <strong class="text-slate-900">{{ $class->title }}</strong>?
                         {{ __('Their status will become Dropped and a seat will be freed for waiting list candidates.') }}
@@ -557,22 +560,22 @@
                             placeholder="e.g. Student requested withdrawal or transferred to another subject"
                             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs"></textarea>
                     </div>
+                </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                        <button 
-                            type="button" 
-                            wire:click="closeDropModal"
-                            class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">
-                            {{ __('Cancel') }}
-                        </button>
-                        <button 
-                            type="button"
-                            wire:click="confirmDrop"
-                            wire:loading.attr="disabled"
-                            class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] shadow-md shadow-rose-500/20 transition-all cursor-pointer">
-                            {{ __('Confirm Drop') }}
-                        </button>
-                    </div>
+                <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
+                    <button 
+                        type="button" 
+                        wire:click="closeDropModal"
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button 
+                        type="button" 
+                        wire:click="confirmDrop"
+                        wire:loading.attr="disabled"
+                        class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] shadow-md shadow-rose-500/20 transition-all cursor-pointer">
+                        {{ __('Confirm Drop') }}
+                    </button>
                 </div>
             </div>
         </div>

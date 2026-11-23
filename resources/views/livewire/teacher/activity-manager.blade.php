@@ -432,11 +432,12 @@
 
     <!-- Create / Edit Activity Modal -->
     @if ($showFormModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6 animate-in fade-in zoom-in-95 duration-200">
-                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <!-- Modal Sticky Header -->
+                <div class="px-6 py-4 sm:px-8 sm:py-5 border-b border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                             {{ $editingActivityId ? __('Edit Activity') : __('Create New Nursery Activity') }}
                         </h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -454,20 +455,22 @@
                     </button>
                 </div>
 
-                <form wire:submit="saveActivity" class="space-y-4">
-                    <!-- Title -->
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                            {{ __('Activity Title') }} <span class="text-rose-500">*</span>
-                        </label>
-                        <input
-                            wire:model="title"
-                            type="text"
-                            placeholder="{{ __('e.g. Finger Painting Rainbows & Shapes') }}"
-                            class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition"
-                        />
-                        @error('title') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
-                    </div>
+                <form wire:submit="saveActivity" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <!-- Modal Scrollable Body -->
+                    <div class="p-6 sm:p-8 overflow-y-auto flex-1 space-y-4">
+                        <!-- Title -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                {{ __('Activity Title') }} <span class="text-rose-500">*</span>
+                            </label>
+                            <input
+                                wire:model="title"
+                                type="text"
+                                placeholder="{{ __('e.g. Finger Painting Rainbows & Shapes') }}"
+                                class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition"
+                            />
+                            @error('title') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
 
                     <!-- Target Class & Age Group (2 Columns) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -931,32 +934,33 @@
                             </label>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Footer Buttons -->
-                    <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
-                        <button
-                            wire:click="$set('showFormModal', false)"
-                            type="button"
-                            class="px-4 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition"
-                        >
-                            {{ __('Cancel') }}
-                        </button>
-                        <button
-                            type="submit"
-                            class="px-5 py-2.5 text-sm font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 active:scale-95 transition"
-                        >
-                            {{ $editingActivityId ? __('Save Changes') : __('Create Activity') }}
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <!-- Modal Sticky Footer Buttons -->
+                <div class="px-6 py-4 sm:px-8 sm:py-4 border-t border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80 dark:bg-slate-800/50">
+                    <button
+                        wire:click="$set('showFormModal', false)"
+                        type="button"
+                        class="px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition"
+                    >
+                        {{ __('Cancel') }}
+                    </button>
+                    <button
+                        type="submit"
+                        class="px-5 py-2.5 text-xs sm:text-sm font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 active:scale-95 transition"
+                    >
+                        {{ $editingActivityId ? __('Save Changes') : __('Create Activity') }}
+                    </button>
+                </div>
+            </form>
         </div>
-    @endif
+    </div>
+@endif
 
     <!-- Delete Confirmation Modal -->
     @if ($showDeleteModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full my-auto max-h-[92vh] overflow-y-auto p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-200">
                 <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl mx-auto">
                     ⚠️
                 </div>
@@ -988,9 +992,9 @@
 
     <!-- Watch Video Modal (§6.1, T-4.2) -->
     @if ($showWatchModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 duration-200">
-                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div class="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between">
                     <div class="min-w-0 pr-4">
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-bold uppercase tracking-wider text-red-600 flex items-center gap-1">
@@ -1015,11 +1019,13 @@
                     </button>
                 </div>
 
-                <div class="rounded-2xl overflow-hidden bg-black shadow-lg">
-                    <x-youtube-player :videoId="$watchVideoId" :title="$watchVideoTitle ?? 'Video Lesson'" :autoplay="true" />
+                <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                    <div class="rounded-2xl overflow-hidden bg-black shadow-lg">
+                        <x-youtube-player :videoId="$watchVideoId" :title="$watchVideoTitle ?? 'Video Lesson'" :autoplay="true" />
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
+                <div class="px-6 py-3 border-t border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/30">
                     <span class="flex items-center gap-1">
                         🛡️ {{ __('Embedded using privacy-enhanced domain youtube-nocookie.com (no tracking cookies).') }}
                     </span>
@@ -1037,9 +1043,9 @@
 
     <!-- Deadline Extension Modal (§6.2, T-4.5) -->
     @if ($showExtensionModal && $extendingActivity)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95 duration-200">
-                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between">
                     <div>
                         <div class="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-0.5">
                             <span>⏰</span>
@@ -1057,6 +1063,8 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
+
+                <div class="p-6 overflow-y-auto flex-1 space-y-4">
 
                 @if ($extensionError)
                     <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
@@ -1140,34 +1148,35 @@
                     ></textarea>
                     @error('extensionReason') <p class="text-[11px] text-rose-500">{{ $message }}</p> @enderror
                 </div>
+            </div>
 
-                <!-- Modal Actions -->
-                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button
-                        wire:click="closeExtensionModal"
-                        type="button"
-                        class="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition"
-                    >
-                        {{ __('Cancel') }}
-                    </button>
-                    <button
-                        wire:click="saveExtension"
-                        type="button"
-                        class="px-5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition active:scale-95 flex items-center gap-1.5"
-                    >
-                        <span>⏰</span>
-                        <span>{{ __('Grant Extension & Notify') }}</span>
-                    </button>
-                </div>
+            <!-- Modal Actions -->
+            <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80 dark:bg-slate-800/50">
+                <button
+                    wire:click="closeExtensionModal"
+                    type="button"
+                    class="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition"
+                >
+                    {{ __('Cancel') }}
+                </button>
+                <button
+                    wire:click="saveExtension"
+                    type="button"
+                    class="px-5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition active:scale-95 flex items-center gap-1.5"
+                >
+                    <span>⏰</span>
+                    <span>{{ __('Grant Extension & Notify') }}</span>
+                </button>
             </div>
         </div>
-    @endif
+    </div>
+@endif
 
     <!-- Extension Log History Modal (§6.2, T-4.5) -->
     @if ($showExtensionLogModal && $extensionLogActivity)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95 duration-200">
-                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 flex items-center justify-between">
                     <div>
                         <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 mb-0.5">
                             <span>📜</span>
@@ -1186,7 +1195,7 @@
                     </button>
                 </div>
 
-                <div class="max-h-96 overflow-y-auto space-y-3">
+                <div class="p-6 overflow-y-auto flex-1 space-y-3">
                     @forelse ($extensionLogActivity->extensions as $ext)
                         <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 space-y-2">
                             <div class="flex items-center justify-between text-xs">
@@ -1228,7 +1237,7 @@
                     @endforelse
                 </div>
 
-                <div class="flex justify-end pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 shrink-0 flex justify-end bg-slate-50/80 dark:bg-slate-800/50">
                     <button
                         wire:click="closeExtensionLogModal"
                         type="button"

@@ -305,45 +305,47 @@
 
     <!-- Quick Create Year Modal -->
     @if ($showCreateYearModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-md w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <h3 class="text-lg font-extrabold text-slate-900">{{ __('Create Target Academic Year') }}</h3>
                     <button type="button" wire:click="closeCreateYearModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <form wire:submit="createTargetYear" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Academic Year Name') }} <span class="text-rose-500">*</span></label>
-                        <input 
-                            type="text" 
-                            wire:model="newYearName"
-                            placeholder="e.g. 2027 Academic Year"
-                            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                        @error('newYearName') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
+                <form wire:submit="createTargetYear" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Starts On') }} <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Academic Year Name') }} <span class="text-rose-500">*</span></label>
                             <input 
-                                type="date" 
-                                wire:model="newYearStartsOn"
+                                type="text" 
+                                wire:model="newYearName"
+                                placeholder="e.g. 2027 Academic Year"
                                 class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                            @error('newYearStartsOn') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            @error('newYearName') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Ends On') }} <span class="text-rose-500">*</span></label>
-                            <input 
-                                type="date" 
-                                wire:model="newYearEndsOn"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                            @error('newYearEndsOn') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Starts On') }} <span class="text-rose-500">*</span></label>
+                                <input 
+                                    type="date" 
+                                    wire:model="newYearStartsOn"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                                @error('newYearStartsOn') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Ends On') }} <span class="text-rose-500">*</span></label>
+                                <input 
+                                    type="date" 
+                                    wire:model="newYearEndsOn"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                                @error('newYearEndsOn') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeCreateYearModal"

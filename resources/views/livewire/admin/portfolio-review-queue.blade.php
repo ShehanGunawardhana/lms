@@ -240,8 +240,9 @@
 
     <!-- Portfolio Detail Preview Modal -->
     @if ($showDetailModal && $selectedProfile)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 my-auto overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-start justify-between">
                 <!-- Modal Header -->
                 <div class="flex items-start justify-between border-b border-slate-100 pb-4">
                     <div class="flex items-center gap-3">
@@ -262,6 +263,8 @@
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
+
+                <div class="p-6 overflow-y-auto flex-1 space-y-5">
 
                 <!-- Academic Bio -->
                 <div class="space-y-1">
@@ -327,8 +330,10 @@
                     @endif
                 </div>
 
+                </div>
+
                 <!-- Modal Actions -->
-                <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-2 bg-slate-50/80">
                     <button type="button"
                             wire:click="closeDetailModal"
                             class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">
@@ -353,17 +358,23 @@
 
     <!-- Request Revision / Rejection Modal -->
     @if ($showRejectModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold">
-                        ✍️
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-md w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 my-auto overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold">
+                            ✍️
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">{{ __('Request Portfolio Revision') }}</h3>
+                            <p class="text-xs text-slate-500">{{ __('Provide constructive feedback to the faculty member.') }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-base font-black text-slate-900">{{ __('Request Portfolio Revision') }}</h3>
-                        <p class="text-xs text-slate-500">{{ __('Provide constructive feedback to the faculty member.') }}</p>
-                    </div>
+                    <button type="button" wire:click="closeRejectModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
+
+                <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                
 
                 <div class="space-y-2">
                     <label class="block text-xs font-bold text-slate-700">{{ __('Feedback / Changes Requested (Mandatory)') }}</label>
@@ -376,7 +387,9 @@
                     @enderror
                 </div>
 
-                <div class="flex items-center justify-end gap-2 pt-2">
+                </div>
+
+                <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-2 bg-slate-50/80">
                     <button type="button"
                             wire:click="closeRejectModal"
                             class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">

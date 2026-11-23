@@ -308,11 +308,11 @@
     <!-- MODAL: CLASS CREATE / EDIT -->
     <!-- ============================================================== -->
     @if ($showModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 sm:px-8 sm:py-5 flex items-center justify-between border-b border-slate-100 shrink-0">
                     <div>
-                        <h3 class="text-lg font-extrabold text-slate-900">
+                        <h3 class="text-base sm:text-lg font-extrabold text-slate-900">
                             {{ $editingClassId ? __('Edit Class / Group') : __('Create New Class or Nursery Group') }}
                         </h3>
                         <p class="text-xs text-slate-500 mt-0.5">
@@ -322,144 +322,146 @@
                     <button type="button" wire:click="closeModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <form wire:submit="saveClass" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Class Title') }} <span class="text-rose-500">*</span></label>
-                            <input 
-                                type="text" 
-                                wire:model="title"
-                                placeholder="e.g. Advanced Level Physics 2026 or Sunflowers Playgroup"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                            @error('title') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                <form wire:submit="saveClass" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 sm:p-8 overflow-y-auto flex-1 space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Class Title') }} <span class="text-rose-500">*</span></label>
+                                <input 
+                                    type="text" 
+                                    wire:model="title"
+                                    placeholder="e.g. Advanced Level Physics 2026 or Sunflowers Playgroup"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                                @error('title') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Subject / Discipline') }}</label>
-                            <input 
-                                type="text" 
-                                wire:model="subject"
-                                placeholder="e.g. Physics, Calculus, Early Childhood"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs">
-                            @error('subject') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Subject / Discipline') }}</label>
+                                <input 
+                                    type="text" 
+                                    wire:model="subject"
+                                    placeholder="e.g. Physics, Calculus, Early Childhood"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs">
+                                @error('subject') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Kind / Type') }} <span class="text-rose-500">*</span></label>
-                            <select 
-                                wire:model="kind"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                                <option value="institute_class">{{ __('Institute Class / Program') }}</option>
-                                <option value="nursery_group">{{ __('Nursery Group') }}</option>
-                            </select>
-                            @error('kind') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Kind / Type') }} <span class="text-rose-500">*</span></label>
+                                <select 
+                                    wire:model="kind"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                                    <option value="institute_class">{{ __('Institute Class / Program') }}</option>
+                                    <option value="nursery_group">{{ __('Nursery Group') }}</option>
+                                </select>
+                                @error('kind') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Academic Year') }}</label>
-                            <select 
-                                wire:model="academic_year_id"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                                <option value="">{{ __('— None / Standalone —') }}</option>
-                                @foreach ($academicYears as $y)
-                                    <option value="{{ $y->id }}">{{ $y->name }} {{ $y->is_current ? '★' : '' }}</option>
-                                @endforeach
-                            </select>
-                            @error('academic_year_id') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Academic Year') }}</label>
+                                <select 
+                                    wire:model="academic_year_id"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                                    <option value="">{{ __('— None / Standalone —') }}</option>
+                                    @foreach ($academicYears as $y)
+                                        <option value="{{ $y->id }}">{{ $y->name }} {{ $y->is_current ? '★' : '' }}</option>
+                                    @endforeach
+                                </select>
+                                @error('academic_year_id') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Batch / Group') }}</label>
-                            <select 
-                                wire:model="batch_id"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                                <option value="">{{ __('— None / Unlinked —') }}</option>
-                                @foreach ($batches as $b)
-                                    <option value="{{ $b->id }}">{{ $b->name }} ({{ $b->code }})</option>
-                                @endforeach
-                            </select>
-                            @error('batch_id') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Batch / Group') }}</label>
+                                <select 
+                                    wire:model="batch_id"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                                    <option value="">{{ __('— None / Unlinked —') }}</option>
+                                    @foreach ($batches as $b)
+                                        <option value="{{ $b->id }}">{{ $b->name }} ({{ $b->code }})</option>
+                                    @endforeach
+                                </select>
+                                @error('batch_id') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Assigned Lecturer / Teacher') }}</label>
-                            <select 
-                                wire:model="teacher_id"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                                <option value="">{{ __('— Select Lecturer —') }}</option>
-                                @foreach ($teachers as $t)
-                                    <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->email }})</option>
-                                @endforeach
-                            </select>
-                            @error('teacher_id') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Assigned Lecturer / Teacher') }}</label>
+                                <select 
+                                    wire:model="teacher_id"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                                    <option value="">{{ __('— Select Lecturer —') }}</option>
+                                    @foreach ($teachers as $t)
+                                        <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->email }})</option>
+                                    @endforeach
+                                </select>
+                                @error('teacher_id') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Monthly Fee (LKR)') }} <span class="text-rose-500">*</span></label>
-                            <input 
-                                type="number" 
-                                step="0.01"
-                                min="0"
-                                wire:model="fee_amount"
-                                placeholder="0.00"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-mono font-bold">
-                            @error('fee_amount') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Monthly Fee (LKR)') }} <span class="text-rose-500">*</span></label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    min="0"
+                                    wire:model="fee_amount"
+                                    placeholder="0.00"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-mono font-bold">
+                                @error('fee_amount') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Capacity (Seats)') }} <span class="text-rose-500">*</span></label>
-                            <input 
-                                type="number" 
-                                min="1"
-                                max="1000"
-                                wire:model="capacity"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-bold">
-                            @error('capacity') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Capacity (Seats)') }} <span class="text-rose-500">*</span></label>
+                                <input 
+                                    type="number" 
+                                    min="1"
+                                    max="1000"
+                                    wire:model="capacity"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-bold">
+                                @error('capacity') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Physical Room / Hall') }}</label>
-                            <input 
-                                type="text" 
-                                wire:model="room"
-                                placeholder="e.g. Hall 401, Lab 2, Sunshine Room"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs">
-                            @error('room') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Physical Room / Hall') }}</label>
+                                <input 
+                                    type="text" 
+                                    wire:model="room"
+                                    placeholder="e.g. Hall 401, Lab 2, Sunshine Room"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs">
+                                @error('room') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Online Lecture URL') }}</label>
-                            <input 
-                                type="url" 
-                                wire:model="online_url"
-                                placeholder="https://zoom.us/j/... or https://meet.google.com/..."
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-mono">
-                            @error('online_url') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Online Lecture URL') }}</label>
+                                <input 
+                                    type="url" 
+                                    wire:model="online_url"
+                                    placeholder="https://zoom.us/j/... or https://meet.google.com/..."
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-mono">
+                                @error('online_url') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Description / Syllabus Overview') }}</label>
-                            <textarea 
-                                wire:model="description"
-                                rows="3"
-                                placeholder="{{ __('Brief description of curriculum, target audience, prerequisites...') }}"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs"></textarea>
-                            @error('description') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Description / Syllabus Overview') }}</label>
+                                <textarea 
+                                    wire:model="description"
+                                    rows="3"
+                                    placeholder="{{ __('Brief description of curriculum, target audience, prerequisites...') }}"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs"></textarea>
+                                @error('description') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Class Status') }} <span class="text-rose-500">*</span></label>
-                            <select 
-                                wire:model="status"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                                <option value="active">{{ __('Active') }}</option>
-                                <option value="archived">{{ __('Archived') }}</option>
-                            </select>
-                            @error('status') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Class Status') }} <span class="text-rose-500">*</span></label>
+                                <select 
+                                    wire:model="status"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                                    <option value="active">{{ __('Active') }}</option>
+                                    <option value="archived">{{ __('Archived') }}</option>
+                                </select>
+                                @error('status') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <div class="px-6 py-4 sm:px-8 sm:py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeModal"

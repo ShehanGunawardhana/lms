@@ -349,16 +349,17 @@
     <!-- MODAL: RECURRING SLOT CREATE / EDIT -->
     <!-- ============================================================== -->
     @if ($showSlotModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <h3 class="text-lg font-extrabold text-slate-900">
                         {{ $editingSlotId ? __('Edit Recurring Slot') : __('Add Weekly Timetable Slot') }}
                     </h3>
                     <button type="button" wire:click="closeSlotModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <form wire:submit="saveSlot" class="space-y-4">
+                <form wire:submit="saveSlot" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Weekday') }} <span class="text-rose-500">*</span></label>
                         <select 
@@ -437,7 +438,9 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    </div>
+
+                    <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeSlotModal"
@@ -460,29 +463,31 @@
     <!-- MODAL: CANCEL SESSION WITH REASON -->
     <!-- ============================================================== -->
     @if ($showCancelModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-md w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <h3 class="text-base font-extrabold text-slate-900">{{ __('Cancel Session') }}</h3>
                     <button type="button" wire:click="closeCancelModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <p class="text-xs text-slate-600 mb-4">
-                    {{ __('Please provide a cancellation reason. Affected students and parents can be notified.') }}
-                </p>
+                <form wire:submit="cancelSession" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                        <p class="text-xs text-slate-600">
+                            {{ __('Please provide a cancellation reason. Affected students and parents can be notified.') }}
+                        </p>
 
-                <form wire:submit="cancelSession" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Reason for Cancellation') }} <span class="text-rose-500">*</span></label>
-                        <textarea 
-                            wire:model="cancelReason"
-                            rows="3"
-                            placeholder="e.g. Lecturer unwell, public holiday observed, venue maintenance..."
-                            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs font-medium"></textarea>
-                        @error('cancelReason') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Reason for Cancellation') }} <span class="text-rose-500">*</span></label>
+                            <textarea 
+                                wire:model="cancelReason"
+                                rows="3"
+                                placeholder="e.g. Lecturer unwell, public holiday observed, venue maintenance..."
+                                class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-2xs font-medium"></textarea>
+                            @error('cancelReason') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                        </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeCancelModal"
@@ -505,9 +510,9 @@
     <!-- MODAL: RESCHEDULE SESSION WITH REASON -->
     <!-- ============================================================== -->
     @if ($showRescheduleModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-auto overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-center justify-between">
                     <div>
                         <h3 class="text-base font-extrabold text-slate-900">{{ __('Reschedule Class Session') }}</h3>
                         <p class="text-xs text-slate-500 mt-0.5">{{ __('Select a new date, time, and record mandatory reason.') }}</p>
@@ -515,57 +520,59 @@
                     <button type="button" wire:click="closeRescheduleModal" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">✕</button>
                 </div>
 
-                <form wire:submit="rescheduleSession" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('New Session Date') }} <span class="text-rose-500">*</span></label>
-                        <input 
-                            type="date" 
-                            wire:model="rescheduleDate"
-                            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
-                        @error('rescheduleDate') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
+                <form wire:submit="rescheduleSession" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div class="p-6 overflow-y-auto flex-1 space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('New Start Time') }} <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('New Session Date') }} <span class="text-rose-500">*</span></label>
                             <input 
-                                type="time" 
-                                wire:model="rescheduleStartsAt"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-mono font-bold">
-                            @error('rescheduleStartsAt') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                type="date" 
+                                wire:model="rescheduleDate"
+                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-semibold">
+                            @error('rescheduleDate') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('New Start Time') }} <span class="text-rose-500">*</span></label>
+                                <input 
+                                    type="time" 
+                                    wire:model="rescheduleStartsAt"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-mono font-bold">
+                                @error('rescheduleStartsAt') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('New End Time') }} <span class="text-rose-500">*</span></label>
+                                <input 
+                                    type="time" 
+                                    wire:model="rescheduleEndsAt"
+                                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-mono font-bold">
+                                @error('rescheduleEndsAt') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                            </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('New End Time') }} <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Room / Venue') }}</label>
                             <input 
-                                type="time" 
-                                wire:model="rescheduleEndsAt"
-                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-mono font-bold">
-                            @error('rescheduleEndsAt') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                type="text" 
+                                wire:model="rescheduleRoom"
+                                placeholder="{{ __('Leave blank to keep current room...') }}"
+                                class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs">
+                            @error('rescheduleRoom') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Reason for Rescheduling') }} <span class="text-rose-500">*</span></label>
+                            <textarea 
+                                wire:model="rescheduleReason"
+                                rows="3"
+                                placeholder="e.g. Moved to Saturday morning due to lecturer conference..."
+                                class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-medium"></textarea>
+                            @error('rescheduleReason') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Room / Venue') }}</label>
-                        <input 
-                            type="text" 
-                            wire:model="rescheduleRoom"
-                            placeholder="{{ __('Leave blank to keep current room...') }}"
-                            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs">
-                        @error('rescheduleRoom') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Reason for Rescheduling') }} <span class="text-rose-500">*</span></label>
-                        <textarea 
-                            wire:model="rescheduleReason"
-                            rows="3"
-                            placeholder="e.g. Moved to Saturday morning due to lecturer conference..."
-                            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-2xs font-medium"></textarea>
-                        @error('rescheduleReason') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                         <button 
                             type="button" 
                             wire:click="closeRescheduleModal"

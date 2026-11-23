@@ -274,10 +274,11 @@
     @endif
 
     <!-- Reject Confirmation Modal -->
+    <!-- Reject Confirmation Modal -->
     @if ($showRejectModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-5 animate-fade-in" @click.away="$wire.closeRejectModal()">
-                <div class="flex items-start justify-between">
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 md:p-6">
+            <div class="relative bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full max-h-[92vh] flex flex-col my-auto overflow-hidden animate-fade-in" @click.away="$wire.closeRejectModal()">
+                <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex items-start justify-between">
                     <div class="flex items-center gap-2.5">
                         <div class="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"/></svg>
@@ -292,23 +293,25 @@
                     </button>
                 </div>
 
-                <div class="space-y-2">
-                    <label for="rejectionReason" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        {{ __('Rejection Reason (will be sent to parent)') }} <span class="text-rose-500">*</span>
-                    </label>
-                    <textarea 
-                        id="rejectionReason"
-                        wire:model="rejectionReason" 
-                        rows="4" 
-                        placeholder="{{ __('e.g., Nursery age group at full capacity for this term; Incomplete immunization records...') }}"
-                        class="block w-full px-3.5 py-2.5 rounded-xl text-xs border @error('rejectionReason') border-rose-300 focus:border-rose-500 @else border-slate-300 focus:border-rose-500 @enderror focus:ring-rose-500 shadow-xs"
-                    ></textarea>
-                    @error('rejectionReason')
-                        <p class="text-xs text-rose-600 font-medium">{{ $message }}</p>
-                    @enderror
+                <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                    <div class="space-y-2">
+                        <label for="rejectionReason" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            {{ __('Rejection Reason (will be sent to parent)') }} <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea 
+                            id="rejectionReason"
+                            wire:model="rejectionReason" 
+                            rows="4" 
+                            placeholder="{{ __('e.g., Nursery age group at full capacity for this term; Incomplete immunization records...') }}"
+                            class="block w-full px-3.5 py-2.5 rounded-xl text-xs border @error('rejectionReason') border-rose-300 focus:border-rose-500 @else border-slate-300 focus:border-rose-500 @enderror focus:ring-rose-500 shadow-xs"
+                        ></textarea>
+                        @error('rejectionReason')
+                            <p class="text-xs text-rose-600 font-medium">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+                <div class="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 bg-slate-50/80">
                     <button 
                         type="button" 
                         wire:click="closeRejectModal" 
@@ -317,9 +320,10 @@
                     </button>
                     <button 
                         type="button" 
-                        wire:click="reject" 
-                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 active:scale-[0.98] shadow-xs cursor-pointer">
-                        {{ __('Confirm Rejection & Notify') }}
+                        wire:click="rejectProfile" 
+                        wire:loading.attr="disabled"
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 cursor-pointer shadow-xs">
+                        {{ __('Confirm Rejection') }}
                     </button>
                 </div>
             </div>
