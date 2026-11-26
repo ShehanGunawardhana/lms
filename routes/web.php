@@ -29,6 +29,7 @@ use App\Livewire\Public\LecturerDirectory;
 use App\Livewire\Public\LecturerPortfolioPage;
 use App\Livewire\Teacher\ActivityManager;
 use App\Livewire\Teacher\ActivityReviewManager;
+use App\Livewire\Teacher\AssignmentManager;
 use App\Livewire\Teacher\PortfolioEditor;
 use App\Livewire\Teacher\TeacherDashboard;
 use App\Models\Institution;
@@ -164,6 +165,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/teacher/activities/{activity}/reviews', ActivityReviewManager::class)
         ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
         ->name('teacher.activities.reviews');
+
+    // Assignments Manager (§8, T-5.1)
+    Route::get('/teacher/assignments', AssignmentManager::class)
+        ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
+        ->name('teacher.assignments');
+
+    Route::get('/assignments', function () {
+        /** @var User|null $user */
+        $user = auth()->user();
+        if ($user !== null && $user->hasRole(RoleName::Student->value)) {
+            return redirect()->route('student.dashboard');
+        }
+
+        return redirect()->route('teacher.assignments');
+    })->middleware(['auth'])->name('assignments.index');
 
     Route::get('/activities', function () {
         /** @var User|null $user */

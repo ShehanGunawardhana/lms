@@ -70,8 +70,13 @@
     @endif
 
     <!-- Assignments & Quizzes -->
-    <a href="{{ Route::has('assignments.index') ? route('assignments.index') : url('/assignments') }}" class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 {{ request()->is('assignments*') ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30' : 'text-slate-300 hover:text-white hover:bg-slate-800' }}">
-        <svg class="mr-3 shrink-0 h-5 w-5 {{ request()->is('assignments*') ? 'text-white' : 'text-slate-400 group-hover:text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    @php
+        $assignmentsRoute = auth()->user()?->hasRole(\App\Enums\RoleName::Student->value)
+            ? (Route::has('student.assignments') ? route('student.assignments') : url('/assignments'))
+            : (Route::has('teacher.assignments') ? route('teacher.assignments') : url('/assignments'));
+    @endphp
+    <a href="{{ $assignmentsRoute }}" class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-150 {{ (request()->is('assignments*') || request()->is('teacher/assignments*') || request()->is('student/assignments*')) ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30 font-semibold' : 'text-slate-300 hover:text-white hover:bg-slate-800' }}">
+        <svg class="mr-3 shrink-0 h-5 w-5 {{ (request()->is('assignments*') || request()->is('teacher/assignments*') || request()->is('student/assignments*')) ? 'text-white' : 'text-slate-400 group-hover:text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
         <span>{{ __('Assignments') }}</span>
