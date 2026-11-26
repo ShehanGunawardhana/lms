@@ -27,6 +27,7 @@ use App\Livewire\Profile\UserProfileManager;
 use App\Livewire\Public\ClassCatalog;
 use App\Livewire\Public\LecturerDirectory;
 use App\Livewire\Public\LecturerPortfolioPage;
+use App\Livewire\Student\AssignmentShow;
 use App\Livewire\Teacher\ActivityManager;
 use App\Livewire\Teacher\ActivityReviewManager;
 use App\Livewire\Teacher\AssignmentManager;
@@ -180,6 +181,15 @@ Route::middleware(['auth'])->group(function () {
 
         return redirect()->route('teacher.assignments');
     })->middleware(['auth'])->name('assignments.index');
+
+    // Assignment Show & Submissions (§8, T-5.2)
+    Route::get('/assignments/{assignment}', AssignmentShow::class)
+        ->middleware(['auth'])
+        ->name('assignments.show');
+
+    Route::get('/student/assignments/{assignment}', AssignmentShow::class)
+        ->middleware(['auth'])
+        ->name('student.assignments.show');
 
     Route::get('/activities', function () {
         /** @var User|null $user */

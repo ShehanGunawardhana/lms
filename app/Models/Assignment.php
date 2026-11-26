@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\AssignmentStatus;
+use App\Enums\AssignmentSubmissionStatus;
 use App\Support\Traits\BelongsToInstitution;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -170,5 +171,86 @@ class Assignment extends Model
         $types = array_map(fn ($ext) => strtoupper(ltrim((string) $ext, '.')), $this->allowed_file_types ?: []);
 
         return implode(', ', $types);
+    }
+
+    /**
+     * @return HasMany<AssignmentSubmission, $this>
+     */
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(AssignmentSubmission::class, 'assignment_id');
+    }
+
+    public function submissionForStudent(int $studentId): ?AssignmentSubmission
+    {
+        return $this->submissions()
+            ->where('student_id', $studentId)
+            ->latest('id')
+            ->first();
+    }
+
+    /**
+     * @return Collection<int, AssignmentSubmission>
+     */
+    public function allSubmissionsForStudent(int $studentId)
+    {
+        return $this->submissions()
+            ->withTrashed()
+            ->where('student_id', $studentId)
+            ->orderByDesc('version')
+            ->get();
+    }
+
+    public function statusForStudent(int $studentId): AssignmentSubmissionStatus
+    {
+        $submission = $this->submissionForStudent($studentId);
+
+        if (! $submission) {
+            return AssignmentSubmissionStatus::NotSubmitted;
+        }
+
+        return $submission->status;
+    }
+
+    public function resubmissionCountForStudent(int $studentId): int
+    {
+        return $this->submissions()
+            ->withTrashed()
+            ->where('student_id', $studentId)
+            ->count();
+    }
+
+    public function resubmissionLimitExceededForStudent(int $studentId): bool
+    {
+        if ($this->resubmission_limit === 0) {
+            return false;
+        }
+
+        $count = $this->resubmissionCountForStudent($studentId);
+
+        return $count >= $this->resubmission_limit;
+    }
+
+    public function canAcceptSubmissionsForStudent(int $studentId): bool
+    {
+        if (! $this->isPublished()) {
+            return false;
+        }
+
+        $activeSubmission = $this->submissionForStudent($studentId);
+
+        if ($activeSubmission && $activeSubmission->isGraded()) {
+            return false;
+        }
+
+        if ($this->resubmissionLimitExceededForStudent($studentId)) {
+            return false;
+        }
+
+        if ($this->isPastDeadlineForStudent($studentId) && ! $this->allow_late) {
+            return false;
+        }
+
+        return true;
     }
 }
