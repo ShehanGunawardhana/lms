@@ -52,6 +52,14 @@ class StudentPolicy extends BasePolicy
     }
 
     /**
+     * Determine whether the user can view the student's progress and achievements (§6.6).
+     */
+    public function viewProgress(User $user, Student $student): bool
+    {
+        return $this->view($user, $student);
+    }
+
+    /**
      * Determine whether the user can create students.
      */
     public function create(User $user): bool

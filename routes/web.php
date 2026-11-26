@@ -21,6 +21,7 @@ use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
 use App\Livewire\Parent\ParentActivityFeed;
 use App\Livewire\Parent\ParentActivityShow;
+use App\Livewire\Parent\ParentChildProgressView;
 use App\Livewire\Parent\ParentChildSafetyManager;
 use App\Livewire\Profile\UserProfileManager;
 use App\Livewire\Public\ClassCatalog;
@@ -191,6 +192,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/parent/children/{student}/safety', ParentChildSafetyManager::class)
         ->middleware('role:parent')
         ->name('parent.children.safety');
+
+    // Nursery Module Parent Child Learning Progress & Milestones (§6.6, T-4.9)
+    Route::get('/parent/progress/{student?}', ParentChildProgressView::class)
+        ->middleware('role:parent')
+        ->name('parent.progress');
+
+    Route::get('/parent/children/{student}/progress', ParentChildProgressView::class)
+        ->middleware('role:parent')
+        ->name('parent.children.progress');
 
     // Lecturer Portfolio Editor (§5.5, T-2.2)
     Route::get('/teacher/portfolio', PortfolioEditor::class)

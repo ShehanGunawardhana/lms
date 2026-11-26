@@ -59,9 +59,15 @@
                     <x-slot name="header">
                         <div class="flex items-center justify-between">
                             <h3 class="text-base font-bold text-slate-900">{{ __('Weekly Nursery Learning Feed') }}</h3>
-                            <a href="{{ route('parent.activities') }}" class="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors">
-                                {{ __('Explore All Activities') }} &rarr;
-                            </a>
+                            <div class="flex items-center gap-3">
+                                <a href="{{ route('parent.progress') }}" class="text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors inline-flex items-center gap-1">
+                                    <span>🏆</span>
+                                    <span>{{ __('Progress & Awards') }}</span>
+                                </a>
+                                <a href="{{ route('parent.activities') }}" class="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors">
+                                    {{ __('Explore Activities') }} &rarr;
+                                </a>
+                            </div>
                         </div>
                     </x-slot>
                     <div class="space-y-4">
