@@ -26,6 +26,10 @@ use Illuminate\Support\Carbon;
  * @property int|null $photo_file_id
  * @property StudentStatus|string $status
  * @property StudentKind|string $kind
+ * @property string|null $medical_notes
+ * @property string|null $allergies
+ * @property string|null $blood_group
+ * @property string|null $emergency_notes
  * @property int|null $registered_by
  * @property Carbon|null $registered_at
  * @property-read User|null $user
@@ -35,6 +39,8 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Guardian> $guardians
  * @property-read Collection<int, SchoolClass> $classes
  * @property-read Collection<int, Enrollment> $enrollments
+ * @property-read Collection<int, EmergencyContact> $emergencyContacts
+ * @property-read Collection<int, AuthorizedPickup> $authorizedPickups
  * @property-read string $full_name
  * @property-read int $age_years
  */
@@ -55,6 +61,10 @@ class Student extends Model
         'photo_file_id',
         'status',
         'kind',
+        'medical_notes',
+        'allergies',
+        'blood_group',
+        'emergency_notes',
         'registered_by',
         'registered_at',
     ];
@@ -69,6 +79,8 @@ class Student extends Model
             'registered_at' => 'datetime',
             'status' => StudentStatus::class,
             'kind' => StudentKind::class,
+            'medical_notes' => 'encrypted',
+            'allergies' => 'encrypted',
         ];
     }
 
@@ -138,6 +150,47 @@ class Student extends Model
     public function deadlineExtensions(): HasMany
     {
         return $this->hasMany(DeadlineExtension::class);
+    }
+
+    /**
+     * @return HasMany<EmergencyContact, $this>
+     */
+    public function emergencyContacts(): HasMany
+    {
+        return $this->hasMany(EmergencyContact::class)->orderBy('priority')->orderBy('id');
+    }
+
+    /**
+     * @return HasMany<AuthorizedPickup, $this>
+     */
+    public function authorizedPickups(): HasMany
+    {
+        return $this->hasMany(AuthorizedPickup::class)->orderByDesc('is_active')->orderBy('name');
+    }
+
+    /**
+     * Check if a specific teacher or user teaches any class this student is actively enrolled in.
+     */
+    public function isTaughtBy(User|int $user): bool
+    {
+        $userId = $user instanceof User ? $user->id : $user;
+
+        return $this->classes()
+            ->wherePivot('status', 'active')
+            ->where('school_classes.teacher_id', $userId)
+            ->exists();
+    }
+
+    /**
+     * Check if a specific user is a guardian of this student.
+     */
+    public function isGuardian(User|int $user): bool
+    {
+        $userId = $user instanceof User ? $user->id : $user;
+
+        return $this->guardians()
+            ->where('guardians.user_id', $userId)
+            ->exists();
     }
 
     public function getFullNameAttribute(): string

@@ -120,16 +120,12 @@
                 <x-card :title="__('Safety & Authorized Pickups')">
                     <div class="space-y-3 text-xs">
                         <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                            <span class="font-bold text-slate-900 block">{{ __('Primary Pickup:') }} Eleanor Vance (Mother)</span>
-                            <span class="text-slate-500 block">📱 +94 77 123 4567</span>
+                            <span class="font-bold text-slate-900 block">{{ __('Pickup & Safety Center') }}</span>
+                            <span class="text-slate-500 block">{{ __('Manage emergency contacts, authorized pickups, and encrypted medical notes (§6.5).') }}</span>
                         </div>
-                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                            <span class="font-bold text-slate-900 block">{{ __('Secondary Pickup:') }} Theodora Vance (Father)</span>
-                            <span class="text-slate-500 block">📱 +94 77 999 8877</span>
-                        </div>
-                        <button type="button" class="w-full text-center py-2 text-xs font-bold text-brand-600 hover:underline cursor-pointer">
-                            + {{ __('Add Authorized Pickup Person') }}
-                        </button>
+                        <a href="{{ route('parent.safety') }}" class="w-full text-center py-2 text-xs font-bold text-brand-600 hover:underline cursor-pointer block">
+                            {{ __('Manage Pickups & Health Details') }} &rarr;
+                        </a>
                     </div>
                 </x-card>
 

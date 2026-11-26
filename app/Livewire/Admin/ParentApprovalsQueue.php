@@ -5,6 +5,8 @@ namespace App\Livewire\Admin;
 use App\Contracts\SmsChannelInterface;
 use App\Enums\StudentKind;
 use App\Enums\StudentStatus;
+use App\Models\AuthorizedPickup;
+use App\Models\EmergencyContact;
 use App\Models\Guardian;
 use App\Models\ParentProfile;
 use App\Models\Student;
@@ -88,6 +90,7 @@ class ParentApprovalsQueue extends Component
                 'gender' => $childReg->gender,
                 'status' => StudentStatus::Active,
                 'kind' => StudentKind::Nursery,
+                'medical_notes' => $childReg->medical_notes,
                 'registered_by' => auth()->id(),
                 'registered_at' => now(),
             ]);
@@ -98,6 +101,28 @@ class ParentApprovalsQueue extends Component
                     'relationship' => $profile->relationship,
                     'is_primary' => true,
                 ],
+            ]);
+
+            // Create initial Emergency Contact if provided (§6.5)
+            if (! empty($profile->emergency_contact_name) && ! empty($profile->emergency_contact_phone)) {
+                EmergencyContact::create([
+                    'institution_id' => $institutionId,
+                    'student_id' => $student->id,
+                    'name' => $profile->emergency_contact_name,
+                    'relationship' => 'Emergency Contact',
+                    'phone_primary' => $profile->emergency_contact_phone,
+                    'priority' => 1,
+                ]);
+            }
+
+            // Create initial Authorized Pickup person for Guardian (§6.5)
+            AuthorizedPickup::create([
+                'institution_id' => $institutionId,
+                'student_id' => $student->id,
+                'name' => $user->name,
+                'relationship' => $profile->relationship ?: 'Parent',
+                'phone' => $user->phone ?: '',
+                'is_active' => true,
             ]);
         }
 

@@ -10,6 +10,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -18,6 +19,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class NurseryStudentManager extends Component
 {
+    use AuthorizesRequests;
     use WithPagination;
 
     public string $search = '';
@@ -66,6 +68,45 @@ class NurseryStudentManager extends Component
     public ?int $enrollStudentId = null;
 
     public ?int $enrollClassId = null;
+
+    // Health & Safety Modal State (§6.5)
+    public bool $showSafetyModal = false;
+
+    public ?int $safetyStudentId = null;
+
+    public string $safetyActiveTab = 'medical';
+
+    public ?string $bloodGroup = null;
+
+    public ?string $allergies = null;
+
+    public ?string $medicalNotes = null;
+
+    public ?string $emergencyNotes = null;
+
+    // Emergency Contact Form State
+    public string $contactName = '';
+
+    public string $contactRelationship = 'Parent';
+
+    public string $contactPhonePrimary = '';
+
+    public string $contactPhoneSecondary = '';
+
+    public int $contactPriority = 1;
+
+    public string $contactNotes = '';
+
+    // Authorized Pickup Form State
+    public string $pickupName = '';
+
+    public string $pickupRelationship = 'Parent';
+
+    public string $pickupPhone = '';
+
+    public string $pickupNationalId = '';
+
+    public string $pickupNotes = '';
 
     public function updatingSearch(): void
     {
@@ -387,6 +428,196 @@ class NurseryStudentManager extends Component
         session()->flash('success', __('Student record :name has been removed.', ['name' => $name]));
     }
 
+    public function openSafetyModal(int $studentId): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $student = Student::where('institution_id', $institutionId)
+            ->where('id', $studentId)
+            ->firstOrFail();
+
+        $this->authorize('viewMedicalNotes', $student);
+
+        $this->safetyStudentId = $student->id;
+        $this->bloodGroup = $student->blood_group;
+        $this->allergies = $student->allergies;
+        $this->medicalNotes = $student->medical_notes;
+        $this->emergencyNotes = $student->emergency_notes;
+        $this->safetyActiveTab = 'medical';
+        $this->resetSafetyForms();
+        $this->showSafetyModal = true;
+    }
+
+    public function closeSafetyModal(): void
+    {
+        $this->showSafetyModal = false;
+        $this->safetyStudentId = null;
+        $this->resetSafetyForms();
+    }
+
+    public function resetSafetyForms(): void
+    {
+        $this->contactName = '';
+        $this->contactRelationship = 'Parent';
+        $this->contactPhonePrimary = '';
+        $this->contactPhoneSecondary = '';
+        $this->contactPriority = 1;
+        $this->contactNotes = '';
+
+        $this->pickupName = '';
+        $this->pickupRelationship = 'Parent';
+        $this->pickupPhone = '';
+        $this->pickupNationalId = '';
+        $this->pickupNotes = '';
+        $this->resetValidation();
+    }
+
+    public function setSafetyTab(string $tab): void
+    {
+        $this->safetyActiveTab = in_array($tab, ['medical', 'contacts', 'pickups'], true) ? $tab : 'medical';
+    }
+
+    public function saveMedicalNotes(): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $student = Student::where('institution_id', $institutionId)
+            ->where('id', $this->safetyStudentId)
+            ->firstOrFail();
+
+        $this->authorize('updateMedicalNotes', $student);
+
+        $this->validate([
+            'bloodGroup' => ['nullable', 'string', 'max:20'],
+            'allergies' => ['nullable', 'string', 'max:2000'],
+            'medicalNotes' => ['nullable', 'string', 'max:5000'],
+            'emergencyNotes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $student->update([
+            'blood_group' => $this->bloodGroup ?: null,
+            'allergies' => $this->allergies ?: null,
+            'medical_notes' => $this->medicalNotes ?: null,
+            'emergency_notes' => $this->emergencyNotes ?: null,
+        ]);
+
+        audit('student.medical_notes_updated', "Updated health and medical notes for student {$student->full_name}", $student);
+        session()->flash('safety_success', __('Medical notes & allergies updated securely.'));
+    }
+
+    public function addEmergencyContact(): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $student = Student::where('institution_id', $institutionId)
+            ->where('id', $this->safetyStudentId)
+            ->firstOrFail();
+
+        $this->authorize('manageEmergencyContacts', $student);
+
+        $this->validate([
+            'contactName' => ['required', 'string', 'max:150'],
+            'contactRelationship' => ['required', 'string', 'max:50'],
+            'contactPhonePrimary' => ['required', 'string', 'max:50'],
+            'contactPhoneSecondary' => ['nullable', 'string', 'max:50'],
+            'contactPriority' => ['required', 'integer', 'min:1', 'max:10'],
+            'contactNotes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $student->emergencyContacts()->create([
+            'institution_id' => $institutionId,
+            'name' => $this->contactName,
+            'relationship' => $this->contactRelationship,
+            'phone_primary' => $this->contactPhonePrimary,
+            'phone_secondary' => $this->contactPhoneSecondary ?: null,
+            'priority' => $this->contactPriority,
+            'notes' => $this->contactNotes ?: null,
+        ]);
+
+        audit('student.emergency_contact_added', "Added emergency contact {$this->contactName} for student {$student->full_name}", $student);
+        $this->resetSafetyForms();
+        session()->flash('safety_success', __('Emergency contact added successfully.'));
+    }
+
+    public function deleteEmergencyContact(int $contactId): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $student = Student::where('institution_id', $institutionId)
+            ->where('id', $this->safetyStudentId)
+            ->firstOrFail();
+
+        $this->authorize('manageEmergencyContacts', $student);
+
+        $contact = $student->emergencyContacts()->where('id', $contactId)->firstOrFail();
+        $name = $contact->name;
+        $contact->delete();
+
+        audit('student.emergency_contact_deleted', "Deleted emergency contact {$name} for student {$student->full_name}", $student);
+        session()->flash('safety_success', __('Emergency contact removed.'));
+    }
+
+    public function addAuthorizedPickup(): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $student = Student::where('institution_id', $institutionId)
+            ->where('id', $this->safetyStudentId)
+            ->firstOrFail();
+
+        $this->authorize('manageAuthorizedPickups', $student);
+
+        $this->validate([
+            'pickupName' => ['required', 'string', 'max:150'],
+            'pickupRelationship' => ['required', 'string', 'max:50'],
+            'pickupPhone' => ['required', 'string', 'max:50'],
+            'pickupNationalId' => ['nullable', 'string', 'max:50'],
+            'pickupNotes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $student->authorizedPickups()->create([
+            'institution_id' => $institutionId,
+            'name' => $this->pickupName,
+            'relationship' => $this->pickupRelationship,
+            'phone' => $this->pickupPhone,
+            'national_id' => $this->pickupNationalId ?: null,
+            'is_active' => true,
+            'notes' => $this->pickupNotes ?: null,
+        ]);
+
+        audit('student.authorized_pickup_added', "Added authorized pickup person {$this->pickupName} for student {$student->full_name}", $student);
+        $this->resetSafetyForms();
+        session()->flash('safety_success', __('Authorized pickup person added successfully.'));
+    }
+
+    public function togglePickupActive(int $pickupId): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $student = Student::where('institution_id', $institutionId)
+            ->where('id', $this->safetyStudentId)
+            ->firstOrFail();
+
+        $this->authorize('manageAuthorizedPickups', $student);
+
+        $pickup = $student->authorizedPickups()->where('id', $pickupId)->firstOrFail();
+        $pickup->update(['is_active' => ! $pickup->is_active]);
+
+        audit('student.authorized_pickup_toggled', "Toggled active status for pickup person {$pickup->name} ({$student->full_name})", $student);
+        session()->flash('safety_success', __('Pickup authorization status updated.'));
+    }
+
+    public function deleteAuthorizedPickup(int $pickupId): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        $student = Student::where('institution_id', $institutionId)
+            ->where('id', $this->safetyStudentId)
+            ->firstOrFail();
+
+        $this->authorize('manageAuthorizedPickups', $student);
+
+        $pickup = $student->authorizedPickups()->where('id', $pickupId)->firstOrFail();
+        $name = $pickup->name;
+        $pickup->delete();
+
+        audit('student.authorized_pickup_deleted', "Deleted authorized pickup person {$name} for student {$student->full_name}", $student);
+        session()->flash('safety_success', __('Authorized pickup person removed.'));
+    }
+
     public function render(): View
     {
         $institutionId = current_institution_id() ?? 1;
@@ -430,11 +661,20 @@ class NurseryStudentManager extends Component
             'total_guardians' => $guardians->count(),
         ];
 
+        $safetyStudent = null;
+        if ($this->safetyStudentId !== null) {
+            $safetyStudent = Student::where('institution_id', $institutionId)
+                ->where('id', $this->safetyStudentId)
+                ->with(['emergencyContacts', 'authorizedPickups.photo'])
+                ->first();
+        }
+
         return view('livewire.admin.nursery-student-manager', [
             'students' => $students,
             'classes' => $classes,
             'guardians' => $guardians,
             'stats' => $stats,
+            'safetyStudent' => $safetyStudent,
         ]);
     }
 }

@@ -21,6 +21,7 @@ use App\Livewire\Auth\AcceptInvitation;
 use App\Livewire\Auth\TwoFactorSetup;
 use App\Livewire\Parent\ParentActivityFeed;
 use App\Livewire\Parent\ParentActivityShow;
+use App\Livewire\Parent\ParentChildSafetyManager;
 use App\Livewire\Profile\UserProfileManager;
 use App\Livewire\Public\ClassCatalog;
 use App\Livewire\Public\LecturerDirectory;
@@ -181,6 +182,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/parent/activities/{activity}', ParentActivityShow::class)
         ->middleware('role:parent')
         ->name('parent.activities.show');
+
+    // Nursery Module Parent Child Health & Safety Manager (§6.5, T-4.8)
+    Route::get('/parent/safety/{student?}', ParentChildSafetyManager::class)
+        ->middleware('role:parent')
+        ->name('parent.safety');
+
+    Route::get('/parent/children/{student}/safety', ParentChildSafetyManager::class)
+        ->middleware('role:parent')
+        ->name('parent.children.safety');
 
     // Lecturer Portfolio Editor (§5.5, T-2.2)
     Route::get('/teacher/portfolio', PortfolioEditor::class)

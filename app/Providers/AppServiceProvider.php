@@ -4,12 +4,15 @@ namespace App\Providers;
 
 use App\Contracts\SmsChannelInterface;
 use App\Contracts\WhatsAppChannelInterface;
+use App\Models\Student;
+use App\Policies\StudentPolicy;
 use App\Services\InstitutionContext;
 use App\Services\Notifications\Channels\LogSmsChannel;
 use App\Services\Notifications\Channels\LogWhatsAppChannel;
 use App\Services\SettingsService;
 use App\Support\Security\PortalTwoFactorProvider;
 use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use PragmaRX\Google2FA\Google2FA;
@@ -39,6 +42,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Gate::policy(Student::class, StudentPolicy::class);
     }
 }
