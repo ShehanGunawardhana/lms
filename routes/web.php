@@ -34,6 +34,7 @@ use App\Livewire\Teacher\ActivityReviewManager;
 use App\Livewire\Teacher\AssignmentManager;
 use App\Livewire\Teacher\AssignmentReviewManager;
 use App\Livewire\Teacher\PortfolioEditor;
+use App\Livewire\Teacher\QuestionBank;
 use App\Livewire\Teacher\TeacherDashboard;
 use App\Models\Institution;
 use App\Models\User;
@@ -178,6 +179,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/teacher/assignments/{assignment}/reviews', AssignmentReviewManager::class)
         ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
         ->name('teacher.assignments.reviews');
+
+    // Question Bank with Tags & All Question Types (§9, T-6.1)
+    Route::get('/teacher/question-bank', QuestionBank::class)
+        ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
+        ->name('teacher.questions.index');
 
     // Student & Parent Coursework Assignments Hub (§8, T-5.5)
     Route::get('/student/assignments', AssignmentList::class)

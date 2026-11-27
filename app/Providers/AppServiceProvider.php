@@ -6,9 +6,11 @@ use App\Contracts\SmsChannelInterface;
 use App\Contracts\WhatsAppChannelInterface;
 use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
+use App\Models\Question;
 use App\Models\Student;
 use App\Policies\AssignmentPolicy;
 use App\Policies\AssignmentSubmissionPolicy;
+use App\Policies\QuestionPolicy;
 use App\Policies\StudentPolicy;
 use App\Services\InstitutionContext;
 use App\Services\Notifications\Channels\LogSmsChannel;
@@ -49,5 +51,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Student::class, StudentPolicy::class);
         Gate::policy(Assignment::class, AssignmentPolicy::class);
         Gate::policy(AssignmentSubmission::class, AssignmentSubmissionPolicy::class);
+        Gate::policy(Question::class, QuestionPolicy::class);
     }
 }
