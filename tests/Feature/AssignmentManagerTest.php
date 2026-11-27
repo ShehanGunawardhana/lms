@@ -446,6 +446,6 @@ class AssignmentManagerTest extends TestCase
 
         $this->actingAs($this->student)
             ->get(route('assignments.index'))
-            ->assertRedirect(route('student.dashboard'));
+            ->assertRedirect(route('student.assignments.index'));
     }
 }

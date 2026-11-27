@@ -344,37 +344,98 @@
                         </div>
                     @endif
 
-                    <!-- Teacher Returned Notice -->
+                    <!-- Teacher Returned Notice (§8, T-5.5) -->
                     @if ($submission->isReturned())
-                        <div class="p-4 bg-orange-50 border border-orange-200 rounded-xl space-y-1 text-xs">
-                            <div class="flex items-center gap-1.5 text-orange-800 font-bold">
-                                <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                <span>{{ __('Returned for Revision by Lecturer') }}</span>
+                        <div class="p-5 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl space-y-3 text-xs">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <div class="flex items-center gap-2 text-orange-900 font-black text-sm">
+                                    <span class="p-1.5 rounded-xl bg-orange-100 text-orange-700">⚠️</span>
+                                    <span>{{ __('Returned for Revision by Lecturer') }}</span>
+                                </div>
+                                @if ($submission->reviewer)
+                                    <span class="text-[11px] text-orange-700">
+                                        {{ __('Returned by :name • :date', ['name' => $submission->reviewer->name, 'date' => format_portal_datetime($submission->reviewed_at, 'M d, Y')]) }}
+                                    </span>
+                                @endif
                             </div>
+
                             @if ($submission->feedback)
-                                <p class="text-orange-900 font-medium whitespace-pre-line">{{ $submission->feedback }}</p>
+                                <div class="bg-white/90 p-3.5 rounded-xl border border-orange-200/80 space-y-1">
+                                    <p class="text-[10px] font-bold text-orange-800 uppercase tracking-wider">{{ __('Lecturer Remarks & Required Corrections:') }}</p>
+                                    <p class="text-xs text-orange-950 font-medium whitespace-pre-line leading-relaxed">{{ $submission->feedback }}</p>
+                                </div>
                             @endif
-                            <p class="text-[10px] text-orange-700 pt-1">
-                                {{ __('Please review feedback and upload an updated replacement version below.') }}
-                            </p>
+
+                            <div class="flex items-center justify-between flex-wrap gap-3 pt-1">
+                                <p class="text-[11px] text-orange-800">
+                                    {{ __('Please address the remarks above and upload your corrected coursework.') }}
+                                </p>
+                                @if ($submission->canBeModified())
+                                    <button 
+                                        type="button" 
+                                        wire:click="openReplaceModal"
+                                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 shadow-xs cursor-pointer inline-flex items-center gap-1.5 btn-interactive">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
+                                        {{ __('Upload Corrected Version (v:next)', ['next' => $submission->version + 1]) }}
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     @endif
 
-                    <!-- Graded Marks & Feedback -->
+                    <!-- Graded Marks & Official Results Card (§8, T-5.5) -->
                     @if ($submission->isGraded())
-                        <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2 text-xs">
-                            <div class="flex items-center justify-between">
-                                <span class="font-bold text-emerald-900">{{ __('Grading Results') }}</span>
-                                <span class="text-sm font-black text-emerald-700">
-                                    {{ $submission->marks }} / {{ $assignment->total_marks }} {{ __('Marks') }}
-                                </span>
+                        <div class="p-6 bg-gradient-to-br from-emerald-50/80 via-white to-brand-50/40 border border-emerald-200 rounded-3xl space-y-4 shadow-xs">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-emerald-100 pb-4">
+                                <div class="space-y-0.5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="p-1.5 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-black">🎓</span>
+                                        <h3 class="text-sm font-black text-emerald-950 uppercase tracking-wider">{{ __('Official Grading & Marks Result') }}</h3>
+                                    </div>
+                                    @if ($submission->reviewer)
+                                        <p class="text-[11px] text-slate-500">
+                                            {{ __('Graded by :reviewer • :date', ['reviewer' => $submission->reviewer->name, 'date' => format_portal_datetime($submission->reviewed_at, 'M d, Y • h:i A')]) }}
+                                        </p>
+                                    @endif
+                                </div>
+
+                                <!-- Score and Badge -->
+                                <div class="flex items-center gap-3">
+                                    @php
+                                        $percentage = $assignment->total_marks > 0 ? (int) round(($submission->marks / $assignment->total_marks) * 100) : 0;
+                                        $passed = $assignment->pass_marks === null || $submission->marks >= $assignment->pass_marks;
+                                    @endphp
+                                    @if ($assignment->pass_marks !== null)
+                                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border {{ $passed ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-rose-100 text-rose-900 border-rose-300' }}">
+                                            {{ $passed ? __('Passed') : __('Did Not Pass') }}
+                                        </span>
+                                    @endif
+                                    <div class="text-right">
+                                        <span class="text-2xl font-black text-slate-900">{{ $submission->marks }}</span>
+                                        <span class="text-xs text-slate-400 font-semibold">/ {{ $assignment->total_marks }}</span>
+                                        <span class="text-xs font-bold text-emerald-700 block">({{ $percentage }}%)</span>
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- Written Feedback Callout -->
                             @if ($submission->feedback)
-                                <div class="pt-1">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ __('Lecturer Feedback') }}</p>
-                                    <p class="text-xs text-slate-800 whitespace-pre-line mt-0.5">{{ $submission->feedback }}</p>
+                                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-1.5">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"/></svg>
+                                        {{ __('Lecturer Remarks & Feedback') }}
+                                    </p>
+                                    <p class="text-xs text-slate-800 whitespace-pre-line leading-relaxed font-normal">{{ $submission->feedback }}</p>
                                 </div>
                             @endif
+
+                            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+                                    {{ __('Graded submission is finalized and locked against further edits.') }}
+                                </span>
+                                <span>{{ __('Version :ver', ['ver' => $submission->version]) }}</span>
+                            </div>
                         </div>
                     @endif
 
@@ -552,7 +613,21 @@
                             @endif
 
                             @if ($h->note)
-                                <p class="text-[11px] text-slate-500 bg-slate-50 p-2 rounded-xl border border-slate-100">{{ $h->note }}</p>
+                                <p class="text-[11px] text-slate-500 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                    <strong class="font-bold text-slate-700">{{ __('Note:') }}</strong> {{ $h->note }}
+                                </p>
+                            @endif
+
+                            @if ($h->feedback)
+                                <div class="text-[11px] text-slate-700 bg-slate-50/80 p-2.5 rounded-xl border border-slate-200 space-y-1">
+                                    <span class="font-bold {{ $h->isReturned() ? 'text-orange-800' : 'text-emerald-800' }}">
+                                        {{ $h->isReturned() ? __('Returned Reason:') : __('Lecturer Remarks:') }}
+                                    </span>
+                                    <p class="whitespace-pre-line">{{ $h->feedback }}</p>
+                                    @if ($h->marks !== null)
+                                        <p class="font-bold text-slate-900 pt-0.5">{{ __('Marks Awarded:') }} {{ $h->marks }} / {{ $assignment->total_marks }}</p>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     @empty

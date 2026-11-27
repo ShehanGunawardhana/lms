@@ -27,6 +27,7 @@ use App\Livewire\Profile\UserProfileManager;
 use App\Livewire\Public\ClassCatalog;
 use App\Livewire\Public\LecturerDirectory;
 use App\Livewire\Public\LecturerPortfolioPage;
+use App\Livewire\Student\AssignmentList;
 use App\Livewire\Student\AssignmentShow;
 use App\Livewire\Teacher\ActivityManager;
 use App\Livewire\Teacher\ActivityReviewManager;
@@ -178,11 +179,16 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
         ->name('teacher.assignments.reviews');
 
+    // Student & Parent Coursework Assignments Hub (§8, T-5.5)
+    Route::get('/student/assignments', AssignmentList::class)
+        ->middleware(['auth'])
+        ->name('student.assignments.index');
+
     Route::get('/assignments', function () {
         /** @var User|null $user */
         $user = auth()->user();
-        if ($user !== null && $user->hasRole(RoleName::Student->value)) {
-            return redirect()->route('student.dashboard');
+        if ($user !== null && ($user->hasRole(RoleName::Student->value) || $user->hasRole(RoleName::Parent->value))) {
+            return redirect()->route('student.assignments.index');
         }
 
         return redirect()->route('teacher.assignments');
