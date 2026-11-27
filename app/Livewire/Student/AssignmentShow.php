@@ -469,6 +469,8 @@ class AssignmentShow extends Component
 
         $deadline = $student ? $this->assignment->effectiveDeadlineForStudent($student->id) : $this->assignment->deadline;
         $isPastDeadline = $student ? $this->assignment->isPastDeadlineForStudent($student->id) : $this->assignment->deadline->isPast();
+        $isExtended = $student ? $this->assignment->isExtendedForStudent($student->id) : false;
+        $latestExtension = $student ? $this->assignment->latestExtensionForStudent($student->id) : null;
         $status = $student ? $this->assignment->statusForStudent($student->id) : AssignmentSubmissionStatus::NotSubmitted;
         $resubmissionCount = $student ? $this->assignment->resubmissionCountForStudent($student->id) : 0;
         $canSubmit = $student ? $this->assignment->canAcceptSubmissionsForStudent($student->id) : false;
@@ -479,6 +481,8 @@ class AssignmentShow extends Component
             'history' => $history,
             'deadline' => $deadline,
             'isPastDeadline' => $isPastDeadline,
+            'isExtended' => $isExtended,
+            'latestExtension' => $latestExtension,
             'status' => $status,
             'resubmissionCount' => $resubmissionCount,
             'canSubmit' => $canSubmit,

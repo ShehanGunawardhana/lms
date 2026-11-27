@@ -83,6 +83,31 @@
                 </div>
             @endif
 
+            <!-- Deadline Extension Callout Banner (§8) -->
+            @if ($isExtended && $latestExtension)
+                <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-start gap-3 shadow-xs">
+                    <div class="p-2 rounded-xl bg-amber-100 text-amber-700 shrink-0">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                    </div>
+                    <div class="min-w-0 space-y-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-black text-amber-900">{{ __('Deadline Extended') }}</span>
+                            <span class="text-[11px] text-amber-700 font-semibold">
+                                {{ __('New Deadline: :date', ['date' => $deadline->format('M d, Y • h:i A')]) }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-amber-800 font-medium">
+                            <strong class="font-bold text-amber-900">{{ __('Reason:') }}</strong> {{ $latestExtension->reason }}
+                        </p>
+                        @if ($latestExtension->extendedBy)
+                            <p class="text-[10px] text-amber-600">
+                                {{ __('Granted by :teacher', ['teacher' => $latestExtension->extendedBy->name]) }}
+                            </p>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             @if ($assignment->instructions)
                 <div class="space-y-2">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ __('Step-by-Step Instructions') }}</h3>
@@ -95,8 +120,15 @@
             <!-- Metadata Banner (Deadline, Allowed File Types, Max Size, Resubmissions) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
                 <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ __('Deadline') }}</p>
-                    <p class="text-xs font-bold {{ $isPastDeadline ? 'text-rose-600 font-black' : 'text-slate-800' }} mt-0.5">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ __('Deadline') }}</p>
+                        @if ($isExtended)
+                            <span class="px-1.5 py-0.2 rounded-md bg-amber-100 text-amber-800 font-bold text-[9px] uppercase tracking-wider">
+                                {{ __('Extended') }}
+                            </span>
+                        @endif
+                    </div>
+                    <p class="text-xs font-bold {{ $isPastDeadline ? 'text-rose-600 font-black' : ($isExtended ? 'text-amber-800 font-black' : 'text-slate-800') }} mt-0.5">
                         {{ $deadline->format('M d, Y - h:i A') }}
                     </p>
                     <p class="text-[10px] text-slate-500 mt-0.5">

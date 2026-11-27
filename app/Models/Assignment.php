@@ -130,27 +130,53 @@ class Assignment extends Model
 
     public function effectiveDeadlineForStudent(?int $studentId = null): Carbon
     {
+        $extension = $this->latestExtensionForStudent($studentId);
+
+        if ($extension !== null) {
+            return $extension->extended_deadline;
+        }
+
+        return $this->deadline;
+    }
+
+    public function isExtendedForStudent(?int $studentId = null): bool
+    {
+        if ($studentId !== null) {
+            $hasStudentExt = $this->extensions()
+                ->where('student_id', $studentId)
+                ->exists();
+
+            if ($hasStudentExt) {
+                return true;
+            }
+        }
+
+        return $this->extensions()
+            ->whereNull('student_id')
+            ->exists();
+    }
+
+    public function latestExtensionForStudent(?int $studentId = null): ?DeadlineExtension
+    {
         if ($studentId !== null) {
             /** @var DeadlineExtension|null $studentExt */
             $studentExt = $this->extensions()
                 ->where('student_id', $studentId)
+                ->latest('id')
                 ->first();
 
             if ($studentExt !== null) {
-                return $studentExt->extended_deadline;
+                return $studentExt;
             }
         }
 
         /** @var DeadlineExtension|null $classExt */
         $classExt = $this->extensions()
             ->whereNull('student_id')
+            ->latest('id')
             ->first();
 
-        if ($classExt !== null) {
-            return $classExt->extended_deadline;
-        }
-
-        return $this->deadline;
+        return $classExt;
     }
 
     public function isPastDeadlineForStudent(?int $studentId = null): bool

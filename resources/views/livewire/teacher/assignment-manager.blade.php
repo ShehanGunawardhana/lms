@@ -154,6 +154,18 @@
                                         </span>
                                     @endif
                                 </div>
+                                @if ($assignment->extensions->isNotEmpty())
+                                    <div class="mt-1">
+                                        <button 
+                                            type="button" 
+                                            wire:click="openExtensionLogModal({{ $assignment->id }})"
+                                            class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 px-1.5 py-0.5 rounded-md cursor-pointer transition-colors"
+                                            title="{{ __('View deadline extension history') }}">
+                                            <svg class="w-3 h-3 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                                            <span>{{ trans_choice('{1} :count extension|[2,*] :count extensions', $assignment->extensions->count(), ['count' => $assignment->extensions->count()]) }}</span>
+                                        </button>
+                                    </div>
+                                @endif
                             </td>
 
                             <!-- Marks / Resubmissions -->
@@ -206,6 +218,14 @@
                                     wire:click="openEditModal({{ $assignment->id }})"
                                     class="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer">
                                     {{ __('Edit') }}
+                                </button>
+
+                                <button 
+                                    type="button" 
+                                    wire:click="openExtensionModal({{ $assignment->id }})"
+                                    class="px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 transition-colors cursor-pointer inline-flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                                    {{ __('Extend') }}
                                 </button>
 
                                 <button 
@@ -437,6 +457,182 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- Extend Deadline Modal (§8, T-5.3) -->
+    @if ($showExtensionModal && $extendingAssignment)
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden animate-fade-in" @click.away="$wire.closeExtensionModal()">
+                <!-- Header -->
+                <div class="px-6 py-4 flex items-center justify-between border-b border-slate-100 bg-slate-50/70">
+                    <div>
+                        <h3 class="text-base font-black text-slate-900 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                            {{ __('Grant Deadline Extension') }}
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5 truncate">{{ $extendingAssignment->title }}</p>
+                    </div>
+                    <button type="button" wire:click="closeExtensionModal" class="text-slate-400 hover:text-slate-600 cursor-pointer text-lg font-bold">
+                        &times;
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <form wire:submit.prevent="saveExtension" class="p-6 space-y-4">
+                    @if ($extensionError)
+                        <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 flex items-center gap-2">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>{{ $extensionError }}</span>
+                        </div>
+                    @endif
+
+                    <!-- Extension Scope Selection -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">{{ __('Extension Scope') }} *</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="p-3 rounded-2xl border {{ $extensionTarget === 'everyone' ? 'border-brand-500 bg-brand-50/50 text-brand-900' : 'border-slate-200 bg-white text-slate-700' }} flex items-center gap-2.5 cursor-pointer transition-colors text-xs font-medium">
+                                <input type="radio" wire:model.live="extensionTarget" value="everyone" class="w-4 h-4 text-brand-600 border-slate-300" />
+                                <div>
+                                    <span class="font-bold block">{{ __('Everyone in Class') }}</span>
+                                    <span class="text-[10px] text-slate-400 block">{{ __('All enrolled students') }}</span>
+                                </div>
+                            </label>
+
+                            <label class="p-3 rounded-2xl border {{ $extensionTarget === 'individual' ? 'border-brand-500 bg-brand-50/50 text-brand-900' : 'border-slate-200 bg-white text-slate-700' }} flex items-center gap-2.5 cursor-pointer transition-colors text-xs font-medium">
+                                <input type="radio" wire:model.live="extensionTarget" value="individual" class="w-4 h-4 text-brand-600 border-slate-300" />
+                                <div>
+                                    <span class="font-bold block">{{ __('Specific Student') }}</span>
+                                    <span class="text-[10px] text-slate-400 block">{{ __('Individual extension') }}</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Student Dropdown if individual -->
+                    @if ($extensionTarget === 'individual')
+                        <div class="animate-fade-in">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Select Enrolled Student') }} *</label>
+                            <select wire:model="extensionStudentId" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600 font-medium">
+                                <option value="">{{ __('Choose a student...') }}</option>
+                                @if ($extendingAssignment->schoolClass)
+                                    @foreach ($extendingAssignment->schoolClass->students as $student)
+                                        <option value="{{ $student->id }}">{{ $student->full_name }} ({{ $student->admission_number ?? 'ID: '.$student->id }})</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            @error('extensionStudentId') <p class="text-[10px] text-rose-600 mt-0.5">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
+
+                    <!-- New Extended Deadline -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-bold text-slate-700">{{ __('New Extended Deadline') }} *</label>
+                            <span class="text-[10px] text-slate-400">
+                                {{ __('Current: :date', ['date' => $extendingAssignment->effectiveDeadlineForStudent($extensionTarget === 'individual' ? $extensionStudentId : null)->format('M d, Y h:i A')]) }}
+                            </span>
+                        </div>
+                        <input type="datetime-local" wire:model="extensionNewDeadline" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600 font-medium" />
+                        @error('extensionNewDeadline') <p class="text-[10px] text-rose-600 mt-0.5">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Mandatory Reason (§8) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">{{ __('Mandatory Reason for Extension') }} *</label>
+                        <textarea wire:model="extensionReason" rows="3" required placeholder="{{ __('Provide detailed explanation (e.g. Approved medical leave, lab outage, extra research time granted)...') }}" class="w-full px-3 py-2 rounded-xl text-xs border border-slate-200 focus:border-brand-600 font-medium"></textarea>
+                        <p class="text-[10px] text-slate-400 mt-0.5">{{ __('Required. This reason is logged to audit trail and visible to affected students/guardians.') }}</p>
+                        @error('extensionReason') <p class="text-[10px] text-rose-600 mt-0.5">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                        <button type="button" wire:click="closeExtensionModal" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer shadow-xs">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 cursor-pointer shadow-xs inline-flex items-center gap-1.5 btn-interactive">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                            {{ __('Grant Extension') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- Extension Log / History Modal (§8, §14) -->
+    @if ($showExtensionLogModal && $extensionLogAssignment)
+        <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-fade-in" @click.away="$wire.closeExtensionLogModal()">
+                <!-- Header -->
+                <div class="px-6 py-4 flex items-center justify-between border-b border-slate-100 shrink-0 bg-slate-50/70">
+                    <div>
+                        <h3 class="text-base font-black text-slate-900 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                            {{ __('Deadline Extension History & Audit') }}
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5 truncate">{{ $extensionLogAssignment->title }}</p>
+                    </div>
+                    <button type="button" wire:click="closeExtensionLogModal" class="text-slate-400 hover:text-slate-600 cursor-pointer text-lg font-bold">
+                        &times;
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                    @if ($extensionLogAssignment->extensions->isEmpty())
+                        <div class="p-8 text-center text-slate-400">
+                            {{ __('No deadline extensions have been granted for this assignment.') }}
+                        </div>
+                    @else
+                        <div class="space-y-3">
+                            @foreach ($extensionLogAssignment->extensions->sortByDesc('created_at') as $ext)
+                                <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-2">
+                                    <div class="flex items-center justify-between flex-wrap gap-2">
+                                        <div class="flex items-center gap-2">
+                                            @if ($ext->student)
+                                                <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold text-[10px]">
+                                                    👤 {{ $ext->student->full_name }}
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px]">
+                                                    👥 {{ __('Class-wide (Everyone)') }}
+                                                </span>
+                                            @endif
+                                            <span class="text-[11px] text-slate-500">
+                                                {{ __('Extended to') }} <strong class="text-slate-800">{{ $ext->extended_deadline->format('M d, Y • h:i A') }}</strong>
+                                            </span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400">
+                                            {{ $ext->created_at->diffForHumans() }}
+                                        </span>
+                                    </div>
+
+                                    <div class="text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-100">
+                                        <span class="font-bold text-slate-500">{{ __('Reason:') }}</span> {{ $ext->reason }}
+                                    </div>
+
+                                    <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+                                        <span>
+                                            {{ __('Original Deadline:') }} {{ $ext->original_deadline ? $ext->original_deadline->format('M d, Y • h:i A') : __('None') }}
+                                        </span>
+                                        <span>
+                                            {{ __('Granted by:') }} <strong class="text-slate-600">{{ $ext->extendedBy?->name ?? __('Staff') }}</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Footer -->
+                <div class="px-6 py-3 flex items-center justify-end border-t border-slate-100 shrink-0 bg-slate-50/80">
+                    <button type="button" wire:click="closeExtensionLogModal" class="px-4 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer shadow-xs">
+                        {{ __('Close') }}
+                    </button>
+                </div>
             </div>
         </div>
     @endif

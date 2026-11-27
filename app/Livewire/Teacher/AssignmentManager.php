@@ -10,6 +10,7 @@ use App\Models\Assignment;
 use App\Models\AssignmentAttachment;
 use App\Models\SchoolClass;
 use App\Models\User;
+use App\Services\DeadlineExtensionService;
 use App\Services\FileService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -80,6 +81,26 @@ class AssignmentManager extends Component
     public mixed $attachmentFile = null;
 
     public string $attachmentError = '';
+
+    // Extension Modal state (§8, T-5.3)
+    public bool $showExtensionModal = false;
+
+    public ?int $extendingAssignmentId = null;
+
+    public string $extensionTarget = 'everyone'; // 'everyone' or 'individual'
+
+    public ?int $extensionStudentId = null;
+
+    public string $extensionNewDeadline = '';
+
+    public string $extensionReason = '';
+
+    public string $extensionError = '';
+
+    // Extension Log History Modal state
+    public bool $showExtensionLogModal = false;
+
+    public ?int $extensionLogAssignmentId = null;
 
     /**
      * Preset of available file extensions for selection (§8, §10).
@@ -451,6 +472,114 @@ class AssignmentManager extends Component
         session()->flash('success', __('Assignment ":title" has been deleted.', ['title' => $title]));
     }
 
+    public function openExtensionModal(int $assignmentId): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        /** @var Assignment $assignment */
+        $assignment = Assignment::where('institution_id', $institutionId)->findOrFail($assignmentId);
+        $this->authorize('update', $assignment);
+
+        $this->extendingAssignmentId = $assignmentId;
+        $this->extensionTarget = 'everyone';
+        $this->extensionStudentId = null;
+        $this->extensionReason = '';
+        $this->extensionError = '';
+
+        $effectiveDeadline = $assignment->effectiveDeadlineForStudent();
+        $this->extensionNewDeadline = $effectiveDeadline->copy()->addDays(2)->format('Y-m-d\TH:i');
+
+        $this->showExtensionModal = true;
+    }
+
+    public function closeExtensionModal(): void
+    {
+        $this->showExtensionModal = false;
+        $this->extendingAssignmentId = null;
+        $this->extensionTarget = 'everyone';
+        $this->extensionStudentId = null;
+        $this->extensionNewDeadline = '';
+        $this->extensionReason = '';
+        $this->extensionError = '';
+    }
+
+    public function saveExtension(?DeadlineExtensionService $extensionService = null): void
+    {
+        $extensionService ??= app(DeadlineExtensionService::class);
+
+        if ($this->extendingAssignmentId === null) {
+            return;
+        }
+
+        $institutionId = current_institution_id() ?? 1;
+        /** @var Assignment $assignment */
+        $assignment = Assignment::where('institution_id', $institutionId)->findOrFail($this->extendingAssignmentId);
+        $this->authorize('update', $assignment);
+
+        $rules = [
+            'extensionTarget' => ['required', 'in:everyone,individual'],
+            'extensionNewDeadline' => ['required', 'date'],
+            'extensionReason' => ['required', 'string', 'min:5', 'max:500'],
+        ];
+
+        if ($this->extensionTarget === 'individual') {
+            $rules['extensionStudentId'] = ['required', 'integer', 'exists:students,id'];
+        }
+
+        $this->validate($rules);
+
+        $newDeadlineCarbon = Carbon::parse($this->extensionNewDeadline);
+        $currentDeadline = $assignment->effectiveDeadlineForStudent($this->extensionTarget === 'individual' ? $this->extensionStudentId : null);
+
+        if ($newDeadlineCarbon->isPast()) {
+            $this->extensionError = __('The new extended deadline cannot be in the past.');
+
+            return;
+        }
+
+        if ($newDeadlineCarbon->lte($currentDeadline)) {
+            $this->extensionError = __('The new deadline must be strictly after the current deadline (:date).', [
+                'date' => $currentDeadline->format('M j, Y • g:i A'),
+            ]);
+
+            return;
+        }
+
+        try {
+            /** @var User $currentUser */
+            $currentUser = auth()->user();
+
+            $extensionService->extendAssignmentDeadline(
+                assignment: $assignment,
+                extendedBy: $currentUser,
+                newDeadline: $newDeadlineCarbon,
+                reason: $this->extensionReason,
+                studentId: $this->extensionTarget === 'individual' ? $this->extensionStudentId : null,
+            );
+
+            session()->flash('success', __('Deadline extension granted successfully and recipients notified.'));
+            $this->closeExtensionModal();
+        } catch (\Throwable $e) {
+            $this->extensionError = $e->getMessage();
+        }
+    }
+
+    public function openExtensionLogModal(int $assignmentId): void
+    {
+        $institutionId = current_institution_id() ?? 1;
+        /** @var Assignment $assignment */
+        $assignment = Assignment::where('institution_id', $institutionId)->findOrFail($assignmentId);
+        $this->authorize('view', $assignment);
+
+        $this->extensionLogAssignmentId = $assignmentId;
+        $this->showExtensionLogModal = true;
+    }
+
+    public function closeExtensionLogModal(): void
+    {
+        $this->showExtensionLogModal = false;
+        $this->extensionLogAssignmentId = null;
+    }
+
     public function render(): View
     {
         $institutionId = current_institution_id() ?? 1;
@@ -482,7 +611,7 @@ class AssignmentManager extends Component
         ];
 
         // 3. Paginated assignments query
-        $query = (clone $baseQuery)->with(['schoolClass', 'creator', 'attachments.fileAsset']);
+        $query = (clone $baseQuery)->with(['schoolClass', 'creator', 'attachments.fileAsset', 'extensions.student', 'extensions.extendedBy']);
 
         if ($this->statusFilter !== 'all') {
             $query->where('status', $this->statusFilter);
@@ -506,11 +635,29 @@ class AssignmentManager extends Component
             ->orderByDesc('id')
             ->paginate(10);
 
+        $extendingAssignment = null;
+        if ($this->extendingAssignmentId !== null) {
+            $extendingAssignment = Assignment::where('institution_id', $institutionId)
+                ->with(['schoolClass.students' => function ($q) {
+                    $q->wherePivot('status', 'active')->orderBy('first_name');
+                }])
+                ->find($this->extendingAssignmentId);
+        }
+
+        $extensionLogAssignment = null;
+        if ($this->extensionLogAssignmentId !== null) {
+            $extensionLogAssignment = Assignment::where('institution_id', $institutionId)
+                ->with(['extensions.extendedBy', 'extensions.student'])
+                ->find($this->extensionLogAssignmentId);
+        }
+
         return view('livewire.teacher.assignment-manager', [
             'assignments' => $assignments,
             'classes' => $classes,
             'metrics' => $metrics,
             'availableFileTypes' => self::AVAILABLE_FILE_TYPES,
+            'extendingAssignment' => $extendingAssignment,
+            'extensionLogAssignment' => $extensionLogAssignment,
         ]);
     }
 }
