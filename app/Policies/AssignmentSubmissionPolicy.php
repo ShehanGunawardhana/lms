@@ -157,9 +157,18 @@ class AssignmentSubmissionPolicy
         }
 
         if ($user->hasRole(RoleName::Teacher->value)) {
-            return $submission->assignment?->schoolClass?->teacher_id === $user->id;
+            return $submission->assignment?->created_by === $user->id
+                || $submission->assignment?->schoolClass?->teacher_id === $user->id;
         }
 
         return false;
+    }
+
+    /**
+     * Determine whether the user can review the submission.
+     */
+    public function review(User $user, AssignmentSubmission $submission): bool
+    {
+        return $this->grade($user, $submission);
     }
 }

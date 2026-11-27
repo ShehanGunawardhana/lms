@@ -31,6 +31,7 @@ use App\Livewire\Student\AssignmentShow;
 use App\Livewire\Teacher\ActivityManager;
 use App\Livewire\Teacher\ActivityReviewManager;
 use App\Livewire\Teacher\AssignmentManager;
+use App\Livewire\Teacher\AssignmentReviewManager;
 use App\Livewire\Teacher\PortfolioEditor;
 use App\Livewire\Teacher\TeacherDashboard;
 use App\Models\Institution;
@@ -171,6 +172,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/teacher/assignments', AssignmentManager::class)
         ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
         ->name('teacher.assignments');
+
+    // Assignment Submissions Review Screen (§8, T-5.4)
+    Route::get('/teacher/assignments/{assignment}/reviews', AssignmentReviewManager::class)
+        ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
+        ->name('teacher.assignments.reviews');
 
     Route::get('/assignments', function () {
         /** @var User|null $user */

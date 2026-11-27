@@ -131,4 +131,12 @@ class AssignmentPolicy extends BasePolicy
     {
         return $this->update($user, $assignment);
     }
+
+    /**
+     * Determine whether the user can review student submissions for the assignment.
+     */
+    public function reviewSubmissions(User $user, Assignment $assignment): bool
+    {
+        return $this->update($user, $assignment);
+    }
 }
