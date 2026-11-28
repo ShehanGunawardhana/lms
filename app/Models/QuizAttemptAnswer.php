@@ -17,7 +17,7 @@ use Illuminate\Support\Carbon;
  * @property array<int, int>|null $selected_option_ids
  * @property string|null $text_answer
  * @property array<int, int>|null $ordering_answer
- * @property array<string, mixed>|null $matching_answer
+ * @property array<int|string, mixed>|null $matching_answer
  * @property float|null $marks_awarded
  * @property bool|null $is_correct
  * @property string|null $feedback

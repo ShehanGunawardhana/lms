@@ -55,6 +55,13 @@ class QuizAttemptRunner extends Component
      */
     public array $orderingAnswer = [];
 
+    /**
+     * @var array<int, int>
+     */
+    public array $matchingAnswer = [];
+
+    public ?int $selectedMatchingLeftId = null;
+
     public bool $isFlagged = false;
 
     /**
@@ -176,15 +183,34 @@ class QuizAttemptRunner extends Component
             shuffle($questionIds);
         }
 
-        // Shuffling options if configured
+        // Shuffling options if configured & shuffling matching targets
         $optionsOrder = [];
-        if ($this->quiz->shuffle_options) {
-            foreach ($quizQuestions as $qq) {
-                if ($qq->question && $qq->question->options->isNotEmpty()) {
-                    $optIds = $qq->question->options->pluck('id')->all();
-                    shuffle($optIds);
-                    $optionsOrder[(string) $qq->question->id] = $optIds;
+        foreach ($quizQuestions as $qq) {
+            if (! $qq->question || $qq->question->options->isEmpty()) {
+                continue;
+            }
+
+            if ($qq->question->type === QuestionType::Matching) {
+                $leftIds = $qq->question->options->pluck('id')->map(fn ($id) => (int) $id)->all();
+                if ($this->quiz->shuffle_options) {
+                    shuffle($leftIds);
                 }
+                $rightIds = $qq->question->options->pluck('id')->map(fn ($id) => (int) $id)->all();
+                if (count($rightIds) > 1) {
+                    $attempts = 0;
+                    do {
+                        shuffle($rightIds);
+                        $attempts++;
+                    } while ($rightIds === $leftIds && $attempts < 5);
+                }
+                $optionsOrder[(string) $qq->question->id] = [
+                    'left' => $leftIds,
+                    'right' => $rightIds,
+                ];
+            } elseif ($this->quiz->shuffle_options) {
+                $optIds = $qq->question->options->pluck('id')->all();
+                shuffle($optIds);
+                $optionsOrder[(string) $qq->question->id] = $optIds;
             }
         }
 
@@ -277,6 +303,16 @@ class QuizAttemptRunner extends Component
             $this->orderingAnswer = (array) ($answer->ordering_answer ?? []);
             $this->isFlagged = (bool) $answer->is_flagged;
 
+            $rawMatching = (array) ($answer->matching_answer ?? []);
+            $normalized = [];
+            foreach ($rawMatching as $k => $v) {
+                if ($v !== null && $v !== '') {
+                    $normalized[(int) $k] = (int) $v;
+                }
+            }
+            $this->matchingAnswer = $normalized;
+            $this->selectedMatchingLeftId = null;
+
             // Ensure ordering options initialized
             if ($this->currentQuestion->type === QuestionType::Ordering && empty($this->orderingAnswer)) {
                 $this->orderingAnswer = $this->getOrderedOptionIds($this->currentQuestion);
@@ -290,6 +326,8 @@ class QuizAttemptRunner extends Component
             $this->orderingAnswer = $this->currentQuestion->type === QuestionType::Ordering
                 ? $this->getOrderedOptionIds($this->currentQuestion)
                 : [];
+            $this->matchingAnswer = [];
+            $this->selectedMatchingLeftId = null;
             $this->isFlagged = false;
         }
     }
@@ -313,8 +351,12 @@ class QuizAttemptRunner extends Component
         $optionsOrderMap = $this->attempt ? $this->attempt->options_order : null;
         $qId = $this->currentQuestion->id;
         if (is_array($optionsOrderMap) && isset($optionsOrderMap[$qId]) && is_array($optionsOrderMap[$qId])) {
+            $rawOrder = $optionsOrderMap[$qId];
             /** @var array<int, int> $optionsOrder */
-            $optionsOrder = $optionsOrderMap[$qId];
+            $optionsOrder = isset($rawOrder['left']) && is_array($rawOrder['left'])
+                ? $rawOrder['left']
+                : $rawOrder;
+
             $map = $options->keyBy('id');
             $sorted = new Collection;
             foreach ($optionsOrder as $optId) {
@@ -337,7 +379,12 @@ class QuizAttemptRunner extends Component
         $optionsOrderMap = $this->attempt ? $this->attempt->options_order : null;
         $qId = $question->id;
         if (is_array($optionsOrderMap) && isset($optionsOrderMap[$qId]) && is_array($optionsOrderMap[$qId])) {
-            return array_map('intval', $optionsOrderMap[$qId]);
+            $rawOrder = $optionsOrderMap[$qId];
+            if (isset($rawOrder['left']) && is_array($rawOrder['left'])) {
+                return array_map('intval', $rawOrder['left']);
+            }
+
+            return array_map('intval', $rawOrder);
         }
 
         return $question->options->sortBy('order_position')->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -479,6 +526,114 @@ class QuizAttemptRunner extends Component
     }
 
     /**
+     * Pair a left premise with a right target.
+     */
+    public function pairMatching(int $leftId, int $rightId): void
+    {
+        if (! $this->attempt || ! $this->attempt->isInProgress() || ! $this->currentQuestion) {
+            return;
+        }
+
+        if ($this->attempt->hasTimeExpired()) {
+            $this->autoSubmitTimedOut();
+
+            return;
+        }
+
+        $this->matchingAnswer[$leftId] = $rightId;
+        $this->selectedMatchingLeftId = null;
+
+        $answer = QuizAttemptAnswer::firstOrNew([
+            'quiz_attempt_id' => $this->attempt->id,
+            'question_id' => $this->currentQuestion->id,
+        ]);
+
+        $answer->matching_answer = $this->matchingAnswer;
+        $answer->save();
+    }
+
+    /**
+     * Unpair a left premise.
+     */
+    public function unpairMatching(int $leftId): void
+    {
+        if (! $this->attempt || ! $this->attempt->isInProgress() || ! $this->currentQuestion) {
+            return;
+        }
+
+        if ($this->attempt->hasTimeExpired()) {
+            $this->autoSubmitTimedOut();
+
+            return;
+        }
+
+        if (isset($this->matchingAnswer[$leftId])) {
+            unset($this->matchingAnswer[$leftId]);
+        }
+
+        if ($this->selectedMatchingLeftId === $leftId) {
+            $this->selectedMatchingLeftId = null;
+        }
+
+        $answer = QuizAttemptAnswer::firstOrNew([
+            'quiz_attempt_id' => $this->attempt->id,
+            'question_id' => $this->currentQuestion->id,
+        ]);
+
+        $answer->matching_answer = $this->matchingAnswer;
+        $answer->save();
+    }
+
+    /**
+     * Select a left premise for tap-to-pair mode.
+     */
+    public function selectMatchingLeft(int $leftId): void
+    {
+        if ($this->selectedMatchingLeftId === $leftId) {
+            $this->selectedMatchingLeftId = null;
+        } else {
+            $this->selectedMatchingLeftId = $leftId;
+        }
+    }
+
+    /**
+     * Select a right target in tap-to-pair mode (pairs if left is selected).
+     */
+    public function selectMatchingRight(int $rightId): void
+    {
+        if ($this->selectedMatchingLeftId !== null) {
+            $this->pairMatching($this->selectedMatchingLeftId, $rightId);
+        }
+    }
+
+    /**
+     * Reset/clear all matching connections for the question.
+     */
+    public function resetMatching(): void
+    {
+        if (! $this->attempt || ! $this->attempt->isInProgress() || ! $this->currentQuestion) {
+            return;
+        }
+
+        if ($this->attempt->hasTimeExpired()) {
+            $this->autoSubmitTimedOut();
+
+            return;
+        }
+
+        $this->matchingAnswer = [];
+        $this->selectedMatchingLeftId = null;
+
+        $answer = QuizAttemptAnswer::firstOrNew([
+            'quiz_attempt_id' => $this->attempt->id,
+            'question_id' => $this->currentQuestion->id,
+        ]);
+
+        $answer->matching_answer = [];
+        $answer->save();
+    }
+
+    /**
      * Toggle flagged status for review.
      */
     public function toggleFlag(): void
@@ -613,6 +768,76 @@ class QuizAttemptRunner extends Component
     }
 
     /**
+     * @return array{left: array<int, array{id: int, text: string, image_url: ?string}>, right: array<int, array{id: int, text: string, image_url: ?string}>}
+     */
+    public function getMatchingPairsProperty(): array
+    {
+        if (! $this->currentQuestion || $this->currentQuestion->type !== QuestionType::Matching) {
+            return ['left' => [], 'right' => []];
+        }
+
+        $options = $this->currentQuestion->options;
+        if ($options->isEmpty()) {
+            return ['left' => [], 'right' => []];
+        }
+
+        $optionsOrderMap = $this->attempt ? $this->attempt->options_order : null;
+        $qId = (string) $this->currentQuestion->id;
+        /** @var array{left?: array<int, int>, right?: array<int, int>}|null $customOrder */
+        $customOrder = is_array($optionsOrderMap) && isset($optionsOrderMap[$qId]) && is_array($optionsOrderMap[$qId])
+            ? $optionsOrderMap[$qId]
+            : null;
+
+        $optionsKeyed = $options->keyBy('id');
+
+        // Left order
+        $leftIds = [];
+        if ($customOrder && isset($customOrder['left'])) {
+            $leftIds = array_map('intval', $customOrder['left']);
+        } else {
+            $leftIds = $options->sortBy('order_position')->pluck('id')->map(fn ($id) => (int) $id)->all();
+        }
+
+        // Right order
+        $rightIds = [];
+        if ($customOrder && isset($customOrder['right'])) {
+            $rightIds = array_map('intval', $customOrder['right']);
+        } else {
+            $rightIds = $options->sortBy('order_position')->pluck('id')->map(fn ($id) => (int) $id)->all();
+            if (count($rightIds) > 1) {
+                $first = array_shift($rightIds);
+                $rightIds[] = (int) $first;
+            }
+        }
+
+        $left = [];
+        foreach ($leftIds as $id) {
+            $opt = $optionsKeyed->get($id);
+            if ($opt) {
+                $left[] = [
+                    'id' => (int) $opt->id,
+                    'text' => (string) ($opt->option_text ?? ''),
+                    'image_url' => $opt->getImageUrl(),
+                ];
+            }
+        }
+
+        $right = [];
+        foreach ($rightIds as $id) {
+            $opt = $optionsKeyed->get($id);
+            if ($opt) {
+                $right[] = [
+                    'id' => (int) $opt->id,
+                    'text' => (string) ($opt->match_text ?? ''),
+                    'image_url' => $opt->getMatchImageUrl(),
+                ];
+            }
+        }
+
+        return ['left' => $left, 'right' => $right];
+    }
+
+    /**
      * Check if results breakdown should be shown based on show_answers_policy.
      */
     public function shouldShowDetailedAnswers(): bool
@@ -648,6 +873,7 @@ class QuizAttemptRunner extends Component
             'remainingSeconds' => $remainingSeconds,
             'navigatorData' => $this->getNavigatorDataProperty(),
             'options' => $this->getQuestionOptionsProperty(),
+            'matchingPairs' => $this->getMatchingPairsProperty(),
             'showAnswers' => $this->shouldShowDetailedAnswers(),
         ]);
     }

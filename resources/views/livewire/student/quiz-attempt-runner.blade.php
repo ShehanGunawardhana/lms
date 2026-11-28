@@ -494,7 +494,141 @@
                                         </div>
                                     </div>
 
-                                {{-- 7. Short Answer --}}
+                                {{-- 7. Matching (Join Pairs) --}}
+                                @elseif ($currentQuestion->type === \App\Enums\QuestionType::Matching)
+                                    <div class="space-y-4"
+                                         x-data="matchingRunner()"
+                                         x-ref="matchingContainer"
+                                         @pointermove.window="onDragMove($event)"
+                                         @pointerup.window="endDrag($event)">
+
+                                        <div class="flex flex-wrap items-center justify-between gap-3 pb-2">
+                                            <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                                                <strong>{{ __('How to match:') }}</strong>
+                                                <span>{{ __('Tap a left item then tap its right match, or drag a line between the dots.') }}</span>
+                                            </div>
+
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
+                                                    {{ count($matchingAnswer) }} / {{ count($matchingPairs['left']) }} {{ __('Paired') }}
+                                                </span>
+                                                @if (count($matchingAnswer) > 0)
+                                                    <button type="button"
+                                                            wire:click="resetMatching"
+                                                            class="text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 underline">
+                                                        {{ __('Clear All Pairs') }}
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        {{-- Interactive Matching Grid with SVG Connectors --}}
+                                        <div class="relative min-h-[260px] p-2 sm:p-4 rounded-2xl bg-zinc-50/60 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-700 select-none">
+                                            {{-- SVG Overlay for Connection Lines --}}
+                                            <svg class="absolute inset-0 w-full h-full pointer-events-none z-10">
+                                                {{-- Matched Pairs Lines --}}
+                                                <template x-for="(line, idx) in lines" :key="line.leftId + '-' + line.rightId">
+                                                    <path :d="line.path"
+                                                          :stroke="line.color"
+                                                          stroke-width="3"
+                                                          stroke-linecap="round"
+                                                          fill="none" />
+                                                </template>
+
+                                                {{-- Active Dragging Line --}}
+                                                <template x-if="isDragging">
+                                                    <line :x1="dragStart.x"
+                                                          :y1="dragStart.y"
+                                                          :x2="dragCurrent.x"
+                                                          :y2="dragCurrent.y"
+                                                          stroke="#3b82f6"
+                                                          stroke-width="2.5"
+                                                          stroke-dasharray="5 5"
+                                                          stroke-linecap="round" />
+                                                </template>
+                                            </svg>
+
+                                            <div class="grid grid-cols-2 gap-8 sm:gap-16 relative z-20">
+                                                {{-- Left Column (Premises) --}}
+                                                <div class="space-y-4">
+                                                    <div class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 pb-1">
+                                                        {{ __('Premises (Left)') }}
+                                                    </div>
+
+                                                    @foreach ($matchingPairs['left'] as $leftItem)
+                                                        @php
+                                                            $isPaired = isset($matchingAnswer[$leftItem['id']]);
+                                                            $isSelected = ($selectedMatchingLeftId === $leftItem['id']);
+                                                        @endphp
+                                                        <div data-matching-left="{{ $leftItem['id'] }}"
+                                                             data-paired-right="{{ $isPaired ? $matchingAnswer[$leftItem['id']] : '' }}"
+                                                             wire:click="selectMatchingLeft({{ $leftItem['id'] }})"
+                                                             class="relative p-3 sm:p-4 rounded-xl border-2 transition cursor-pointer flex items-center justify-between gap-3 {{ $isSelected ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/40 ring-2 ring-primary-500/40 shadow-sm' : ($isPaired ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-300') }}">
+                                                            <div class="flex items-center gap-3 overflow-hidden">
+                                                                @if ($leftItem['image_url'])
+                                                                    <div class="w-12 h-12 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 flex-shrink-0 bg-white dark:bg-zinc-900">
+                                                                        <img src="{{ $leftItem['image_url'] }}" alt="Premise image" class="w-full h-full object-cover" />
+                                                                    </div>
+                                                                @endif
+                                                                <span class="text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                                                                    {{ $leftItem['text'] ?: __('Item') }}
+                                                                </span>
+                                                            </div>
+
+                                                            <div class="flex items-center gap-2">
+                                                                @if ($isPaired)
+                                                                    <button type="button"
+                                                                            wire:click.stop="unpairMatching({{ $leftItem['id'] }})"
+                                                                            title="{{ __('Unpair') }}"
+                                                                            class="p-1 rounded-full text-zinc-400 hover:text-rose-600 hover:bg-zinc-100 dark:hover:bg-zinc-700">
+                                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                        </svg>
+                                                                    </button>
+                                                                @endif
+
+                                                                {{-- Left Node Anchor Dot for Dragging/Touch --}}
+                                                                <div class="node-dot w-4 h-4 rounded-full border-2 transition flex-shrink-0 cursor-crosshair {{ $isPaired ? 'bg-emerald-500 border-emerald-600' : ($isSelected ? 'bg-primary-500 border-primary-600 animate-pulse' : 'bg-zinc-200 dark:bg-zinc-600 border-zinc-400 dark:border-zinc-500') }}"
+                                                                     @pointerdown.stop="startDrag($event, {{ $leftItem['id'] }})"></div>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+
+                                                {{-- Right Column (Targets) --}}
+                                                <div class="space-y-4">
+                                                    <div class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 pb-1 text-right">
+                                                        {{ __('Targets (Right)') }}
+                                                    </div>
+
+                                                    @foreach ($matchingPairs['right'] as $rightItem)
+                                                        @php
+                                                            $isPairedToLeft = in_array($rightItem['id'], $matchingAnswer, true);
+                                                        @endphp
+                                                        <div data-matching-right="{{ $rightItem['id'] }}"
+                                                             wire:click="selectMatchingRight({{ $rightItem['id'] }})"
+                                                             class="relative p-3 sm:p-4 rounded-xl border-2 transition cursor-pointer flex items-center justify-between gap-3 {{ $isPairedToLeft ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-300' }}">
+                                                            {{-- Right Node Anchor Dot --}}
+                                                            <div class="node-dot w-4 h-4 rounded-full border-2 transition flex-shrink-0 {{ $isPairedToLeft ? 'bg-emerald-500 border-emerald-600' : 'bg-zinc-200 dark:bg-zinc-600 border-zinc-400 dark:border-zinc-500' }}"></div>
+
+                                                            <div class="flex items-center gap-3 overflow-hidden text-right justify-end flex-1">
+                                                                <span class="text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                                                                    {{ $rightItem['text'] ?: __('Target') }}
+                                                                </span>
+                                                                @if ($rightItem['image_url'])
+                                                                    <div class="w-12 h-12 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 flex-shrink-0 bg-white dark:bg-zinc-900">
+                                                                        <img src="{{ $rightItem['image_url'] }}" alt="Target image" class="w-full h-full object-cover" />
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                {{-- 8. Short Answer --}}
                                 @elseif ($currentQuestion->type === \App\Enums\QuestionType::ShortAnswer)
                                     <div class="space-y-3">
                                         <label for="short-answer-input" class="block text-xs font-semibold text-zinc-500 dark:text-zinc-400">
@@ -817,6 +951,43 @@
                                             <strong>{{ __('Correct Answers:') }}</strong>
                                             <span>{{ $correctOpts }}</span>
                                         </div>
+                                    @elseif ($q->type === \App\Enums\QuestionType::Matching)
+                                        <div class="mt-2 space-y-2">
+                                            <strong class="text-zinc-600 dark:text-zinc-400">{{ __('Matching Pairs Review:') }}</strong>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                                                @foreach ($q->options as $opt)
+                                                    @php
+                                                        $matchingAnsArray = (array) ($ans?->matching_answer ?? []);
+                                                        $matchedRightId = $matchingAnsArray[$opt->id] ?? $matchingAnsArray[(string) $opt->id] ?? null;
+                                                        $matchedOption = $matchedRightId ? $q->options->firstWhere('id', (int) $matchedRightId) : null;
+                                                        $isPairCorrect = ($matchedRightId !== null && (int) $matchedRightId === (int) $opt->id);
+                                                    @endphp
+                                                    <div class="p-2.5 rounded-lg border text-xs flex items-center justify-between {{ $isPairCorrect ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30' : 'border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/30' }}">
+                                                        <div class="space-y-1">
+                                                            <div>
+                                                                <span class="font-semibold text-zinc-700 dark:text-zinc-300">{{ $opt->option_text ?: __('Premise') }}</span>
+                                                                <span class="text-zinc-400">&rarr;</span>
+                                                                <span class="font-medium {{ $isPairCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300 line-through' }}">
+                                                                    {{ $matchedOption ? ($matchedOption->match_text ?: __('Target')) : __('Not matched') }}
+                                                                </span>
+                                                            </div>
+                                                            @if (! $isPairCorrect)
+                                                                <div class="text-emerald-700 dark:text-emerald-400 font-medium">
+                                                                    {{ __('Correct match:') }} {{ $opt->match_text }}
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                        <div>
+                                                            @if ($isPairCorrect)
+                                                                <span class="text-emerald-600 font-bold">&check;</span>
+                                                            @else
+                                                                <span class="text-rose-600 font-bold">&cross;</span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
                                     @endif
 
                                     @if ($q->explanation)
@@ -902,6 +1073,108 @@ document.addEventListener('alpine:init', () => {
 
         get isCritical() {
             return this.remainingSeconds !== null && this.remainingSeconds <= 60;
+        }
+    }));
+
+    Alpine.data('matchingRunner', () => ({
+        isDragging: false,
+        dragLeftId: null,
+        dragStart: { x: 0, y: 0 },
+        dragCurrent: { x: 0, y: 0 },
+        colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#14b8a6', '#f97316'],
+        lines: [],
+
+        init() {
+            this.$nextTick(() => this.updateLines());
+            window.addEventListener('resize', () => this.updateLines());
+            if (window.Livewire) {
+                Livewire.hook('morph.updated', () => {
+                    this.$nextTick(() => this.updateLines());
+                });
+            }
+        },
+
+        updateLines() {
+            const container = this.$refs.matchingContainer;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const newLines = [];
+            let colorIdx = 0;
+
+            const leftNodes = container.querySelectorAll('[data-matching-left]');
+            leftNodes.forEach(leftEl => {
+                const leftId = leftEl.getAttribute('data-matching-left');
+                const rightId = leftEl.getAttribute('data-paired-right');
+                if (rightId) {
+                    const rightEl = container.querySelector(`[data-matching-right="${rightId}"]`);
+                    if (rightEl) {
+                        const lDot = leftEl.querySelector('.node-dot') || leftEl;
+                        const rDot = rightEl.querySelector('.node-dot') || rightEl;
+                        const lRect = lDot.getBoundingClientRect();
+                        const rRect = rDot.getBoundingClientRect();
+
+                        const x1 = lRect.left + lRect.width / 2 - rect.left;
+                        const y1 = lRect.top + lRect.height / 2 - rect.top;
+                        const x2 = rRect.left + rRect.width / 2 - rect.left;
+                        const y2 = rRect.top + rRect.height / 2 - rect.top;
+
+                        const color = this.colors[colorIdx % this.colors.length];
+                        colorIdx++;
+
+                        const midX = (x1 + x2) / 2;
+                        const path = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+
+                        newLines.push({ leftId, rightId, path, color, x1, y1, x2, y2 });
+                    }
+                }
+            });
+
+            this.lines = newLines;
+        },
+
+        startDrag(e, leftId) {
+            const container = this.$refs.matchingContainer;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+            this.isDragging = true;
+            this.dragLeftId = leftId;
+            this.dragStart = { x: clientX - rect.left, y: clientY - rect.top };
+            this.dragCurrent = { x: clientX - rect.left, y: clientY - rect.top };
+        },
+
+        onDragMove(e) {
+            if (!this.isDragging) return;
+            const container = this.$refs.matchingContainer;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+            this.dragCurrent = { x: clientX - rect.left, y: clientY - rect.top };
+        },
+
+        endDrag(e) {
+            if (!this.isDragging) return;
+            this.isDragging = false;
+
+            const clientX = e.clientX || (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : 0);
+            const clientY = e.clientY || (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientY : 0);
+
+            if (clientX && clientY) {
+                const targetEl = document.elementFromPoint(clientX, clientY);
+                const rightCard = targetEl ? targetEl.closest('[data-matching-right]') : null;
+                if (rightCard) {
+                    const rightId = rightCard.getAttribute('data-matching-right');
+                    if (rightId && this.dragLeftId) {
+                        @this.pairMatching(parseInt(this.dragLeftId), parseInt(rightId));
+                    }
+                }
+            }
+
+            this.dragLeftId = null;
         }
     }));
 });

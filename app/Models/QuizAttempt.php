@@ -285,6 +285,29 @@ class QuizAttempt extends Model
                     }
                     break;
 
+                case QuestionType::Matching:
+                    if (! empty($ans->matching_answer)) {
+                        $totalPairs = $question->options->count();
+                        $correctPairs = 0;
+                        foreach ($ans->matching_answer as $leftId => $rightId) {
+                            if ((int) $leftId === (int) $rightId) {
+                                $correctPairs++;
+                            }
+                        }
+
+                        if ($correctPairs === $totalPairs && $totalPairs > 0) {
+                            $isCorrect = true;
+                            $awarded = $maxMarks;
+                        } elseif ($allowPenalty && $penalty > 0) {
+                            $isCorrect = false;
+                            $awarded = -$penalty;
+                        } else {
+                            $isCorrect = false;
+                            $awarded = $totalPairs > 0 ? round(($correctPairs / $totalPairs) * $maxMarks, 2) : 0.0;
+                        }
+                    }
+                    break;
+
                 case QuestionType::ShortAnswer:
                     // Open-ended questions are routed to manual review queue
                     $isCorrect = null;

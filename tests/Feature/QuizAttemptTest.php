@@ -427,6 +427,220 @@ class QuizAttemptTest extends TestCase
         $this->assertEquals([$optO1->id, $optO2->id, $optO3->id], $ansOrder->ordering_answer);
     }
 
+    public function test_student_can_answer_matching_question_via_tap_to_pair(): void
+    {
+        $quiz = $this->createSampleQuiz();
+
+        $qMatch = Question::create([
+            'institution_id' => $this->institution->id,
+            'created_by' => $this->teacher->id,
+            'title' => 'Animal and Offspring Matching',
+            'type' => QuestionType::Matching,
+            'difficulty' => QuestionDifficulty::Easy,
+            'question_text' => 'Match each animal with its baby name:',
+            'default_marks' => 6.0,
+        ]);
+
+        $optCat = QuestionOption::create([
+            'question_id' => $qMatch->id,
+            'option_text' => 'Cat',
+            'match_text' => 'Kitten',
+            'is_correct' => true,
+            'order_position' => 1,
+        ]);
+        $optDog = QuestionOption::create([
+            'question_id' => $qMatch->id,
+            'option_text' => 'Dog',
+            'match_text' => 'Puppy',
+            'is_correct' => true,
+            'order_position' => 2,
+        ]);
+        $optCow = QuestionOption::create([
+            'question_id' => $qMatch->id,
+            'option_text' => 'Cow',
+            'match_text' => 'Calf',
+            'is_correct' => true,
+            'order_position' => 3,
+        ]);
+
+        QuizQuestion::create(['quiz_id' => $quiz->id, 'question_id' => $qMatch->id, 'order_position' => 1, 'marks' => 6.0]);
+
+        $this->actingAs($this->student);
+
+        $runner = Livewire::test(QuizAttemptRunner::class, ['quiz' => $quiz])
+            ->call('startAttempt');
+
+        $attempt = QuizAttempt::where('quiz_id', $quiz->id)->first();
+        $this->assertNotNull($attempt);
+
+        // Tap-to-pair 1: Cat -> Kitten
+        $runner->call('selectMatchingLeft', $optCat->id)
+            ->assertSet('selectedMatchingLeftId', $optCat->id)
+            ->call('selectMatchingRight', $optCat->id)
+            ->assertSet('selectedMatchingLeftId', null);
+
+        // Tap-to-pair 2: Dog -> Puppy
+        $runner->call('selectMatchingLeft', $optDog->id)
+            ->call('selectMatchingRight', $optDog->id);
+
+        // Direct pair method: Cow -> Calf
+        $runner->call('pairMatching', $optCow->id, $optCow->id);
+
+        $ans = QuizAttemptAnswer::where('quiz_attempt_id', $attempt->id)->where('question_id', $qMatch->id)->first();
+        $this->assertNotNull($ans);
+        $this->assertEquals([
+            $optCat->id => $optCat->id,
+            $optDog->id => $optDog->id,
+            $optCow->id => $optCow->id,
+        ], $ans->matching_answer);
+        $this->assertTrue($ans->isAnswered());
+    }
+
+    public function test_student_can_unpair_and_reset_matching_connections(): void
+    {
+        $quiz = $this->createSampleQuiz();
+
+        $qMatch = Question::create([
+            'institution_id' => $this->institution->id,
+            'created_by' => $this->teacher->id,
+            'title' => 'Countries and Capitals',
+            'type' => QuestionType::Matching,
+            'difficulty' => QuestionDifficulty::Medium,
+            'question_text' => 'Match countries with their capitals:',
+            'default_marks' => 4.0,
+        ]);
+
+        $optFrance = QuestionOption::create([
+            'question_id' => $qMatch->id,
+            'option_text' => 'France',
+            'match_text' => 'Paris',
+            'is_correct' => true,
+            'order_position' => 1,
+        ]);
+        $optItaly = QuestionOption::create([
+            'question_id' => $qMatch->id,
+            'option_text' => 'Italy',
+            'match_text' => 'Rome',
+            'is_correct' => true,
+            'order_position' => 2,
+        ]);
+
+        QuizQuestion::create(['quiz_id' => $quiz->id, 'question_id' => $qMatch->id, 'order_position' => 1, 'marks' => 4.0]);
+
+        $this->actingAs($this->student);
+
+        $runner = Livewire::test(QuizAttemptRunner::class, ['quiz' => $quiz])
+            ->call('startAttempt');
+
+        $attempt = QuizAttempt::where('quiz_id', $quiz->id)->first();
+
+        // Pair France -> Rome (wrong)
+        $runner->call('pairMatching', $optFrance->id, $optItaly->id);
+
+        $ans = QuizAttemptAnswer::where('quiz_attempt_id', $attempt->id)->where('question_id', $qMatch->id)->first();
+        $this->assertEquals([$optFrance->id => $optItaly->id], $ans->matching_answer);
+
+        // Unpair France
+        $runner->call('unpairMatching', $optFrance->id);
+        $ans->refresh();
+        $this->assertEmpty($ans->matching_answer);
+
+        // Pair both and call reset
+        $runner->call('pairMatching', $optFrance->id, $optFrance->id)
+            ->call('pairMatching', $optItaly->id, $optItaly->id);
+        $ans->refresh();
+        $this->assertCount(2, $ans->matching_answer);
+
+        $runner->call('resetMatching');
+        $ans->refresh();
+        $this->assertEmpty($ans->matching_answer);
+    }
+
+    public function test_submitting_matching_question_scores_full_and_partial_marks(): void
+    {
+        $quiz = $this->createSampleQuiz([
+            'total_marks' => 6.0,
+            'pass_percentage' => 50.0,
+        ]);
+
+        $qMatch = Question::create([
+            'institution_id' => $this->institution->id,
+            'created_by' => $this->teacher->id,
+            'title' => 'Math Pairs',
+            'type' => QuestionType::Matching,
+            'difficulty' => QuestionDifficulty::Easy,
+            'question_text' => 'Match expressions with equal values:',
+            'default_marks' => 6.0,
+        ]);
+
+        $opt1 = QuestionOption::create(['question_id' => $qMatch->id, 'option_text' => '2+2', 'match_text' => '4', 'is_correct' => true, 'order_position' => 1]);
+        $opt2 = QuestionOption::create(['question_id' => $qMatch->id, 'option_text' => '3x3', 'match_text' => '9', 'is_correct' => true, 'order_position' => 2]);
+        $opt3 = QuestionOption::create(['question_id' => $qMatch->id, 'option_text' => '10/2', 'match_text' => '5', 'is_correct' => true, 'order_position' => 3]);
+
+        QuizQuestion::create(['quiz_id' => $quiz->id, 'question_id' => $qMatch->id, 'order_position' => 1, 'marks' => 6.0]);
+
+        $this->actingAs($this->student);
+
+        // Submit with all correct pairs
+        $runner = Livewire::test(QuizAttemptRunner::class, ['quiz' => $quiz])
+            ->call('startAttempt')
+            ->call('pairMatching', $opt1->id, $opt1->id)
+            ->call('pairMatching', $opt2->id, $opt2->id)
+            ->call('pairMatching', $opt3->id, $opt3->id)
+            ->call('submitAttempt');
+
+        $attempt = QuizAttempt::where('quiz_id', $quiz->id)->first();
+        $this->assertEquals(QuizAttemptStatus::Completed, $attempt->status);
+        $this->assertEquals(6.0, $attempt->score);
+        $this->assertEquals(100.0, $attempt->percentage);
+        $this->assertTrue($attempt->passed);
+
+        $runner->assertSee('Matching Pairs Review:')
+            ->assertSee('2+2')
+            ->assertSee('3x3')
+            ->assertSee('10/2');
+    }
+
+    public function test_matching_partial_credit_awarded_when_some_pairs_correct(): void
+    {
+        $quiz = $this->createSampleQuiz([
+            'total_marks' => 6.0,
+            'allow_negative_marking' => false,
+        ]);
+
+        $qMatch = Question::create([
+            'institution_id' => $this->institution->id,
+            'created_by' => $this->teacher->id,
+            'title' => 'Partial Match Question',
+            'type' => QuestionType::Matching,
+            'difficulty' => QuestionDifficulty::Easy,
+            'question_text' => 'Match pairs:',
+            'default_marks' => 6.0,
+        ]);
+
+        $opt1 = QuestionOption::create(['question_id' => $qMatch->id, 'option_text' => 'A', 'match_text' => '1', 'is_correct' => true, 'order_position' => 1]);
+        $opt2 = QuestionOption::create(['question_id' => $qMatch->id, 'option_text' => 'B', 'match_text' => '2', 'is_correct' => true, 'order_position' => 2]);
+        $opt3 = QuestionOption::create(['question_id' => $qMatch->id, 'option_text' => 'C', 'match_text' => '3', 'is_correct' => true, 'order_position' => 3]);
+
+        QuizQuestion::create(['quiz_id' => $quiz->id, 'question_id' => $qMatch->id, 'order_position' => 1, 'marks' => 6.0]);
+
+        $this->actingAs($this->student);
+
+        // 1 correct (opt1), 2 swapped / wrong (opt2 -> opt3, opt3 -> opt2)
+        Livewire::test(QuizAttemptRunner::class, ['quiz' => $quiz])
+            ->call('startAttempt')
+            ->call('pairMatching', $opt1->id, $opt1->id)
+            ->call('pairMatching', $opt2->id, $opt3->id)
+            ->call('pairMatching', $opt3->id, $opt2->id)
+            ->call('submitAttempt');
+
+        $attempt = QuizAttempt::where('quiz_id', $quiz->id)->first();
+        // 1 of 3 pairs = 2.0 marks
+        $this->assertEquals(2.0, $attempt->score);
+        $this->assertEquals(33.33, $attempt->percentage);
+        $this->assertFalse($attempt->passed);
+    }
+
     public function test_student_can_flag_question_for_review(): void
     {
         $quiz = $this->createSampleQuiz();
