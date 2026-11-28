@@ -32,8 +32,12 @@ class FileAssetPolicy extends BasePolicy
             return true;
         }
 
-        // 3. Learning materials & profile photos in the same institution
-        if ($fileAsset->purpose === 'profile_photo' || $fileAsset->purpose === 'material' || $fileAsset->purpose === 'activity_submission') {
+        // 3. Learning materials, question/quiz media & profile photos in the same institution
+        if ($fileAsset->purpose === 'profile_photo'
+            || $fileAsset->purpose === 'material'
+            || $fileAsset->purpose === 'activity_submission'
+            || $fileAsset->purpose === 'question_asset'
+            || $fileAsset->purpose === 'quiz_asset') {
             return true;
         }
 

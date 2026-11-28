@@ -241,6 +241,24 @@
                                 </span>
                             @endif
 
+                            @if ($question->hasImage())
+                                <span class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    {{ __('Image') }}
+                                </span>
+                            @endif
+
+                            @if ($question->hasAudio())
+                                <span class="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-medium">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    </svg>
+                                    {{ __('Audio') }}
+                                </span>
+                            @endif
+
                             <span>{{ __('Created by') }} {{ $question->creator?->name ?? __('Staff') }}</span>
                         </div>
 
@@ -482,6 +500,94 @@
                                 </div>
                             </div>
 
+                            <!-- Media Uploads (Question Image & Audio) -->
+                            <div class="border-t border-slate-200 dark:border-slate-700 pt-5 space-y-4">
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                                    {{ __('Question Media (Optional)') }}
+                                </h3>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Question Image -->
+                                    <div class="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                                                {{ __('Question Image (Diagram / Illustration)') }}
+                                            </label>
+                                            @if ($questionImage || $existingImageUrl)
+                                                <button
+                                                    type="button"
+                                                    wire:click="removeQuestionImage"
+                                                    class="text-xs font-semibold text-rose-500 hover:text-rose-600"
+                                                >
+                                                    {{ __('Remove Image') }}
+                                                </button>
+                                            @endif
+                                        </div>
+
+                                        @if ($questionImage)
+                                            <div class="relative w-full h-36 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600">
+                                                <img src="{{ $questionImage->temporaryUrl() }}" alt="Preview" class="w-full h-full object-contain" />
+                                            </div>
+                                        @elseif ($existingImageUrl)
+                                            <div class="relative w-full h-36 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600">
+                                                <img src="{{ $existingImageUrl }}" alt="Current Image" class="w-full h-full object-contain" />
+                                            </div>
+                                        @else
+                                            <input
+                                                type="file"
+                                                wire:model="questionImage"
+                                                accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                                                class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-slate-700 dark:file:text-slate-200"
+                                            />
+                                        @endif
+
+                                        <div wire:loading wire:target="questionImage" class="text-xs text-brand-600 dark:text-brand-400">
+                                            {{ __('Uploading image...') }}
+                                        </div>
+                                        @error('questionImage') <span class="text-xs text-rose-500 block">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <!-- Question Audio -->
+                                    <div class="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                                                {{ __('Question Audio (Listening Prompt / Read-aloud)') }}
+                                            </label>
+                                            @if ($questionAudio || $existingAudioUrl)
+                                                <button
+                                                    type="button"
+                                                    wire:click="removeQuestionAudio"
+                                                    class="text-xs font-semibold text-rose-500 hover:text-rose-600"
+                                                >
+                                                    {{ __('Remove Audio') }}
+                                                </button>
+                                            @endif
+                                        </div>
+
+                                        @if ($existingAudioUrl)
+                                            <audio controls src="{{ $existingAudioUrl }}" class="w-full mt-2"></audio>
+                                        @elseif ($questionAudio)
+                                            <div class="p-2.5 bg-brand-50 dark:bg-slate-800 rounded-xl border border-brand-200 dark:border-slate-600 text-xs text-brand-800 dark:text-brand-300 flex items-center justify-between">
+                                                <span>🎵 {{ $questionAudio->getClientOriginalName() }}</span>
+                                                <span class="text-[10px] text-slate-500">{{ round($questionAudio->getSize() / 1024) }} KB</span>
+                                            </div>
+                                        @else
+                                            <input
+                                                type="file"
+                                                wire:model="questionAudio"
+                                                accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/x-m4a,.mp3,.wav,.ogg,.m4a"
+                                                class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-slate-700 dark:file:text-slate-200"
+                                            />
+                                        @endif
+
+                                        <div wire:loading wire:target="questionAudio" class="text-xs text-purple-600 dark:text-purple-400">
+                                            {{ __('Uploading audio...') }}
+                                        </div>
+                                        @error('questionAudio') <span class="text-xs text-rose-500 block">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Dynamic Answers & Options Section -->
                             <div class="border-t border-slate-200 dark:border-slate-700 pt-5 space-y-4">
                                 <div class="flex items-center justify-between">
@@ -601,69 +707,136 @@
 
                                 <!-- TYPE 4: Matching -->
                                 @elseif ($type === \App\Enums\QuestionType::Matching->value)
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Set up matching pairs (Left premise <---> Right target):') }}</p>
-                                    <div class="space-y-2.5">
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Set up matching pairs (Left premise <---> Right target) with optional text and/or images:') }}</p>
+                                    <div class="space-y-3">
                                         @foreach ($options as $index => $opt)
-                                            <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                                                <span class="text-xs font-bold text-slate-400 w-6 text-center">#{{ $index + 1 }}</span>
-                                                <input
-                                                    type="text"
-                                                    wire:model="options.{{ $index }}.left"
-                                                    placeholder="{{ __('Left item (Premise)...') }}"
-                                                    class="flex-1 px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500"
-                                                />
-                                                <span class="text-slate-400">↔</span>
-                                                <input
-                                                    type="text"
-                                                    wire:model="options.{{ $index }}.right"
-                                                    placeholder="{{ __('Right match (Target)...') }}"
-                                                    class="flex-1 px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500"
-                                                />
-                                                @if (count($options) > 2)
-                                                    <button
-                                                        type="button"
-                                                        wire:click="removeOption({{ $index }})"
-                                                        class="text-slate-400 hover:text-rose-600 p-1"
-                                                    >
-                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
-                                                @endif
+                                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-xs font-bold text-slate-400 w-6 text-center">#{{ $index + 1 }}</span>
+                                                    <input
+                                                        type="text"
+                                                        wire:model="options.{{ $index }}.left"
+                                                        placeholder="{{ __('Left item (Premise)...') }}"
+                                                        class="flex-1 px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500"
+                                                    />
+                                                    <span class="text-slate-400">↔</span>
+                                                    <input
+                                                        type="text"
+                                                        wire:model="options.{{ $index }}.right"
+                                                        placeholder="{{ __('Right match (Target)...') }}"
+                                                        class="flex-1 px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500"
+                                                    />
+                                                    @if (count($options) > 2)
+                                                        <button
+                                                            type="button"
+                                                            wire:click="removeOption({{ $index }})"
+                                                            class="text-slate-400 hover:text-rose-600 p-1"
+                                                        >
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    @endif
+                                                </div>
+
+                                                <!-- Optional Left / Right Images -->
+                                                <div class="grid grid-cols-2 gap-3 pl-8 pt-1 text-xs">
+                                                    <div>
+                                                        <span class="block text-[11px] text-slate-500 mb-1">{{ __('Left Image (Optional)') }}</span>
+                                                        @if (isset($optionImages[$index]))
+                                                            <div class="flex items-center gap-2">
+                                                                <img src="{{ $optionImages[$index]->temporaryUrl() }}" class="h-8 w-8 object-cover rounded-md" />
+                                                                <button type="button" wire:click="removeOptionImage({{ $index }})" class="text-rose-500 text-[10px] hover:underline">{{ __('Remove') }}</button>
+                                                            </div>
+                                                        @elseif (!empty($opt['image_url']))
+                                                            <div class="flex items-center gap-2">
+                                                                <img src="{{ $opt['image_url'] }}" class="h-8 w-8 object-cover rounded-md" />
+                                                                <button type="button" wire:click="removeOptionImage({{ $index }})" class="text-rose-500 text-[10px] hover:underline">{{ __('Remove') }}</button>
+                                                            </div>
+                                                        @else
+                                                            <input type="file" wire:model="optionImages.{{ $index }}" accept="image/*" class="text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:bg-slate-200 dark:file:bg-slate-700" />
+                                                        @endif
+                                                    </div>
+                                                    <div>
+                                                        <span class="block text-[11px] text-slate-500 mb-1">{{ __('Right Match Image (Optional)') }}</span>
+                                                        @if (isset($optionMatchImages[$index]))
+                                                            <div class="flex items-center gap-2">
+                                                                <img src="{{ $optionMatchImages[$index]->temporaryUrl() }}" class="h-8 w-8 object-cover rounded-md" />
+                                                                <button type="button" wire:click="removeOptionMatchImage({{ $index }})" class="text-rose-500 text-[10px] hover:underline">{{ __('Remove') }}</button>
+                                                            </div>
+                                                        @elseif (!empty($opt['match_image_url']))
+                                                            <div class="flex items-center gap-2">
+                                                                <img src="{{ $opt['match_image_url'] }}" class="h-8 w-8 object-cover rounded-md" />
+                                                                <button type="button" wire:click="removeOptionMatchImage({{ $index }})" class="text-rose-500 text-[10px] hover:underline">{{ __('Remove') }}</button>
+                                                            </div>
+                                                        @else
+                                                            <input type="file" wire:model="optionMatchImages.{{ $index }}" accept="image/*" class="text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:bg-slate-200 dark:file:bg-slate-700" />
+                                                        @endif
+                                                    </div>
+                                                </div>
                                             </div>
                                         @endforeach
                                     </div>
 
                                 <!-- TYPE 5: Picture Choice -->
                                 @elseif ($type === \App\Enums\QuestionType::PictureChoice->value)
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Provide picture choices with label/caption and mark the correct image answer(s):') }}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Provide picture choices with image upload (or URL) and mark the correct image answer(s):') }}</p>
                                     <div class="space-y-3">
                                         @foreach ($options as $index => $opt)
-                                            <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                                                <input
-                                                    type="checkbox"
-                                                    wire:model="options.{{ $index }}.is_correct"
-                                                    class="h-4 w-4 text-brand-600 focus:ring-brand-500 border-slate-300 rounded cursor-pointer"
-                                                />
+                                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                                <div class="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        wire:model="options.{{ $index }}.is_correct"
+                                                        class="h-4 w-4 text-brand-600 focus:ring-brand-500 border-slate-300 rounded cursor-pointer"
+                                                    />
+                                                    <span class="text-xs font-bold text-slate-400 sm:hidden">{{ __('Correct') }}</span>
+                                                </div>
+
+                                                <!-- Image Preview or Upload -->
+                                                <div class="shrink-0 w-24 h-16 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 overflow-hidden flex items-center justify-center relative">
+                                                    @if (isset($optionImages[$index]))
+                                                        <img src="{{ $optionImages[$index]->temporaryUrl() }}" alt="Preview" class="w-full h-full object-cover" />
+                                                    @elseif (!empty($opt['image_url']))
+                                                        <img src="{{ $opt['image_url'] }}" alt="Option image" class="w-full h-full object-cover" />
+                                                    @elseif (!empty($opt['image_path']))
+                                                        <img src="{{ $opt['image_path'] }}" alt="Option image" class="w-full h-full object-cover" />
+                                                    @else
+                                                        <span class="text-[10px] text-slate-400 text-center px-1">{{ __('No image') }}</span>
+                                                    @endif
+                                                </div>
+
                                                 <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                     <input
                                                         type="text"
                                                         wire:model="options.{{ $index }}.text"
-                                                        placeholder="{{ __('Label / Caption (e.g. Cat, Lion, Dog)') }}"
+                                                        placeholder="{{ __('Label / Caption (e.g. Option :num)', ['num' => $index + 1]) }}"
                                                         class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                                                     />
-                                                    <input
-                                                        type="text"
-                                                        wire:model="options.{{ $index }}.image_path"
-                                                        placeholder="{{ __('Image URL or asset path...') }}"
-                                                        class="px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                                                    />
+                                                    <div class="flex items-center gap-2">
+                                                        <input
+                                                            type="file"
+                                                            wire:model="optionImages.{{ $index }}"
+                                                            accept="image/*"
+                                                            class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-200 dark:file:bg-slate-700"
+                                                        />
+                                                        @if (isset($optionImages[$index]) || !empty($opt['image_url']) || !empty($opt['image_path']))
+                                                            <button
+                                                                type="button"
+                                                                wire:click="removeOptionImage({{ $index }})"
+                                                                class="text-xs text-rose-500 hover:text-rose-600 shrink-0"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        @endif
+                                                    </div>
                                                 </div>
+
                                                 @if (count($options) > 2)
                                                     <button
                                                         type="button"
                                                         wire:click="removeOption({{ $index }})"
-                                                        class="text-slate-400 hover:text-rose-600 p-1"
+                                                        class="text-slate-400 hover:text-rose-600 p-1 self-end sm:self-center"
                                                     >
                                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -892,6 +1065,25 @@
                             <p class="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line">{{ $previewQuestion->question_text }}</p>
                         </div>
 
+                        <!-- Question Media (Image & Audio) -->
+                        @if ($previewQuestion->hasImage())
+                            <div class="my-3 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-72 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+                                <img src="{{ $previewQuestion->getImageUrl() }}" alt="{{ $previewQuestion->title }}" class="max-h-72 w-auto object-contain rounded-2xl" />
+                            </div>
+                        @endif
+
+                        @if ($previewQuestion->hasAudio())
+                            <div class="my-3 p-3 bg-purple-50 dark:bg-purple-950/30 rounded-2xl border border-purple-200 dark:border-purple-800">
+                                <p class="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1 flex items-center gap-1.5">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    </svg>
+                                    {{ __('Audio Prompt') }}
+                                </p>
+                                <audio controls src="{{ $previewQuestion->getAudioUrl() }}" class="w-full"></audio>
+                            </div>
+                        @endif
+
                         <!-- Render Options according to type -->
                         <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-700">
                             @if ($previewQuestion->type === \App\Enums\QuestionType::SingleChoice)
@@ -939,12 +1131,43 @@
                             @elseif ($previewQuestion->type === \App\Enums\QuestionType::Matching)
                                 <div class="space-y-2">
                                     @foreach ($previewQuestion->options as $opt)
-                                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-sm">
-                                            <span class="font-medium text-slate-800 dark:text-slate-200">{{ $opt->option_text }}</span>
+                                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-sm gap-2">
+                                            <div class="flex items-center gap-2">
+                                                @if ($opt->hasImage())
+                                                    <img src="{{ $opt->getImageUrl() }}" alt="{{ $opt->option_text }}" class="h-10 w-10 object-cover rounded-lg border border-slate-200 dark:border-slate-600" />
+                                                @endif
+                                                <span class="font-medium text-slate-800 dark:text-slate-200">{{ $opt->option_text }}</span>
+                                            </div>
                                             <span class="text-slate-400 px-2">↔</span>
-                                            <span class="font-medium {{ $showAnswersInPreview ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-800 dark:text-slate-200' }}">
-                                                {{ $opt->match_text }}
-                                            </span>
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-medium {{ $showAnswersInPreview ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-800 dark:text-slate-200' }}">
+                                                    {{ $opt->match_text }}
+                                                </span>
+                                                @if ($opt->hasMatchImage())
+                                                    <img src="{{ $opt->getMatchImageUrl() }}" alt="{{ $opt->match_text }}" class="h-10 w-10 object-cover rounded-lg border border-slate-200 dark:border-slate-600" />
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                            @elseif ($previewQuestion->type === \App\Enums\QuestionType::PictureChoice)
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    @foreach ($previewQuestion->options as $index => $opt)
+                                        <div class="p-3 rounded-2xl border flex flex-col items-center text-center gap-2 {{ $showAnswersInPreview && $opt->is_correct ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-400 ring-2 ring-emerald-500' : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600' }}">
+                                            @if ($opt->hasImage())
+                                                <img src="{{ $opt->getImageUrl() }}" alt="{{ $opt->option_text }}" class="h-24 w-full object-cover rounded-xl" />
+                                            @elseif ($opt->image_path)
+                                                <img src="{{ $opt->image_path }}" alt="{{ $opt->option_text }}" class="h-24 w-full object-cover rounded-xl" />
+                                            @else
+                                                <div class="h-24 w-full rounded-xl bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-xs text-slate-400">
+                                                    {{ __('No image') }}
+                                                </div>
+                                            @endif
+                                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ $opt->option_text }}</span>
+                                            @if ($showAnswersInPreview && $opt->is_correct)
+                                                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">✓ {{ __('Correct') }}</span>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>

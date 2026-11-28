@@ -69,6 +69,11 @@ class FileAsset extends Model
         return $this->kind === 'archive' || $this->extension === 'zip';
     }
 
+    public function isAudio(): bool
+    {
+        return $this->kind === 'audio';
+    }
+
     /**
      * Generate a signed temporary download URL.
      */
@@ -78,6 +83,18 @@ class FileAsset extends Model
             'files.download',
             now()->addMinutes($expirationMinutes),
             ['uuid' => $this->uuid]
+        );
+    }
+
+    /**
+     * Generate a signed temporary inline streaming URL (for images and audio).
+     */
+    public function getInlineUrl(int $expirationMinutes = 60): string
+    {
+        return URL::temporarySignedRoute(
+            'files.download',
+            now()->addMinutes($expirationMinutes),
+            ['uuid' => $this->uuid, 'inline' => 1]
         );
     }
 

@@ -67,7 +67,7 @@ class FileService
         $kind = $verifiedType['kind'];
 
         // 3. Global & Contextual Type Whitelist Verification
-        $globalWhitelist = portal_setting('uploads.allowed_types', ['mp4', 'mov', 'webm', 'pdf', 'jpg', 'png', 'zip']);
+        $globalWhitelist = portal_setting('uploads.allowed_types', ['mp4', 'mov', 'webm', 'pdf', 'jpg', 'png', 'zip', 'mp3', 'wav', 'ogg', 'm4a']);
         if (! in_array($verifiedExt, $globalWhitelist, true) && ! in_array($declaredExt, $globalWhitelist, true)) {
             throw new FileUploadException(
                 __('File type :ext is not allowed by institution policy.', ['ext' => $verifiedExt])
@@ -278,9 +278,35 @@ class FileService
             return ['extension' => 'webm', 'mime' => 'video/webm', 'kind' => 'video'];
         }
 
-        // Check MP4 / MOV: Box header at offset 4 contains 'ftyp'
+        // Check MP3: ID3 tag (\x49\x44\x33) or MPEG sync frame (\xFF\xFB, \xFF\xF3, \xFF\xF2)
+        if (str_starts_with($header, 'ID3')
+            || str_starts_with($header, "\xFF\xFB")
+            || str_starts_with($header, "\xFF\xF3")
+            || str_starts_with($header, "\xFF\xF2")) {
+            return ['extension' => 'mp3', 'mime' => 'audio/mpeg', 'kind' => 'audio'];
+        }
+
+        // Check WAV: RIFF header with WAVE format
+        if (str_starts_with($header, 'RIFF') && strlen($header) >= 12 && substr($header, 8, 4) === 'WAVE') {
+            return ['extension' => 'wav', 'mime' => 'audio/wav', 'kind' => 'audio'];
+        }
+
+        // Check OGG: OggS (\x4F\x67\x67\x53)
+        if (str_starts_with($header, 'OggS')) {
+            return ['extension' => 'ogg', 'mime' => 'audio/ogg', 'kind' => 'audio'];
+        }
+
+        // Check MP4 / MOV / M4A: Box header at offset 4 contains 'ftyp'
         if (strlen($header) >= 12 && substr($header, 4, 4) === 'ftyp') {
             $majorBrand = substr($header, 8, 4);
+            if ($majorBrand === 'M4A ' || $declaredExt === 'm4a') {
+                return [
+                    'extension' => 'm4a',
+                    'mime' => 'audio/mp4',
+                    'kind' => 'audio',
+                ];
+            }
+
             $isQuickTime = ($majorBrand === 'qt  ' || $declaredExt === 'mov');
 
             return [

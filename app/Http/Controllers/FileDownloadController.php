@@ -29,6 +29,14 @@ class FileDownloadController extends Controller
             abort(404, __('The requested file could not be found in storage.'));
         }
 
+        if ($request->boolean('inline') || $fileAsset->isImage() || $fileAsset->isAudio()) {
+            return $disk->response(
+                $fileAsset->path,
+                $fileAsset->original_name,
+                ['Content-Type' => $fileAsset->mime_verified]
+            );
+        }
+
         return $disk->download(
             $fileAsset->path,
             $fileAsset->original_name,

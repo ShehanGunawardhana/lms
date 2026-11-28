@@ -32,6 +32,8 @@ class QuestionFactory extends Factory
             'default_marks' => 1.0,
             'default_penalty_marks' => 0.0,
             'settings' => null,
+            'image_file_id' => null,
+            'audio_file_id' => null,
             'is_active' => true,
         ];
     }

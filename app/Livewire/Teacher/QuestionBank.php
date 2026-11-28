@@ -10,6 +10,7 @@ use App\Models\Question;
 use App\Models\QuestionOption;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\FileService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -17,11 +18,13 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class QuestionBank extends Component
 {
+    use WithFileUploads;
     use WithPagination;
 
     #[Url(as: 'q')]
@@ -66,6 +69,36 @@ class QuestionBank extends Component
     public bool $is_active = true;
 
     public string $tagsInput = '';
+
+    // Media uploads (Question level)
+    public $questionImage = null;
+
+    public $questionAudio = null;
+
+    public ?int $existingImageId = null;
+
+    public ?int $existingAudioId = null;
+
+    public ?string $existingImageUrl = null;
+
+    public ?string $existingAudioUrl = null;
+
+    /**
+     * Option uploads indexed by option index
+     *
+     * @var array<int, mixed>
+     */
+    public array $optionImages = [];
+
+    /**
+     * @var array<int, mixed>
+     */
+    public array $optionAudios = [];
+
+    /**
+     * @var array<int, mixed>
+     */
+    public array $optionMatchImages = [];
 
     /**
      * Dynamic options array
@@ -144,9 +177,61 @@ class QuestionBank extends Component
         $this->is_active = true;
         $this->tagsInput = '';
         $this->caseSensitive = false;
+        $this->questionImage = null;
+        $this->questionAudio = null;
+        $this->existingImageId = null;
+        $this->existingAudioId = null;
+        $this->existingImageUrl = null;
+        $this->existingAudioUrl = null;
+        $this->optionImages = [];
+        $this->optionAudios = [];
+        $this->optionMatchImages = [];
 
         $this->initOptionsForType($this->type);
         $this->showModal = true;
+    }
+
+    public function removeQuestionImage(): void
+    {
+        $this->questionImage = null;
+        $this->existingImageId = null;
+        $this->existingImageUrl = null;
+    }
+
+    public function removeQuestionAudio(): void
+    {
+        $this->questionAudio = null;
+        $this->existingAudioId = null;
+        $this->existingAudioUrl = null;
+    }
+
+    public function removeOptionImage(int $index): void
+    {
+        unset($this->optionImages[$index]);
+        if (isset($this->options[$index])) {
+            $this->options[$index]['image_file_id'] = null;
+            $this->options[$index]['image_url'] = null;
+            $this->options[$index]['image_path'] = null;
+        }
+    }
+
+    public function removeOptionAudio(int $index): void
+    {
+        unset($this->optionAudios[$index]);
+        if (isset($this->options[$index])) {
+            $this->options[$index]['audio_file_id'] = null;
+            $this->options[$index]['audio_url'] = null;
+        }
+    }
+
+    public function removeOptionMatchImage(int $index): void
+    {
+        unset($this->optionMatchImages[$index]);
+        if (isset($this->options[$index])) {
+            $this->options[$index]['match_image_file_id'] = null;
+            $this->options[$index]['match_image_url'] = null;
+            $this->options[$index]['match_image_path'] = null;
+        }
     }
 
     public function initOptionsForType(string $type): void
@@ -341,7 +426,7 @@ class QuestionBank extends Component
     {
         $institutionId = $this->getInstitutionId();
         $question = Question::where('institution_id', $institutionId)
-            ->with(['options', 'tags'])
+            ->with(['options.imageFile', 'options.audioFile', 'options.matchImageFile', 'imageFile', 'audioFile', 'tags'])
             ->findOrFail($id);
 
         Gate::authorize('update', $question);
@@ -361,6 +446,16 @@ class QuestionBank extends Component
         $this->caseSensitive = ! empty($question->settings['case_sensitive']);
         $this->tagsInput = $question->tags->pluck('name')->implode(', ');
 
+        $this->questionImage = null;
+        $this->questionAudio = null;
+        $this->optionImages = [];
+        $this->optionAudios = [];
+        $this->optionMatchImages = [];
+        $this->existingImageId = $question->image_file_id;
+        $this->existingAudioId = $question->audio_file_id;
+        $this->existingImageUrl = $question->getImageUrl();
+        $this->existingAudioUrl = $question->getAudioUrl();
+
         // Populate options based on question type
         $this->options = [];
         switch ($question->type->value) {
@@ -371,6 +466,10 @@ class QuestionBank extends Component
                         'id' => $opt->id,
                         'text' => $opt->option_text ?? '',
                         'is_correct' => (bool) $opt->is_correct,
+                        'image_file_id' => $opt->image_file_id,
+                        'audio_file_id' => $opt->audio_file_id,
+                        'image_url' => $opt->getImageUrl(),
+                        'audio_url' => $opt->getAudioUrl(),
                     ];
                 }
                 break;
@@ -391,6 +490,10 @@ class QuestionBank extends Component
                         'id' => $opt->id,
                         'left' => $opt->option_text ?? '',
                         'right' => $opt->match_text ?? '',
+                        'image_file_id' => $opt->image_file_id,
+                        'match_image_file_id' => $opt->match_image_file_id,
+                        'image_url' => $opt->getImageUrl(),
+                        'match_image_url' => $opt->getMatchImageUrl(),
                     ];
                 }
                 break;
@@ -400,6 +503,10 @@ class QuestionBank extends Component
                     $this->options[] = [
                         'id' => $opt->id,
                         'image_path' => $opt->image_path ?? '',
+                        'image_file_id' => $opt->image_file_id,
+                        'audio_file_id' => $opt->audio_file_id,
+                        'image_url' => $opt->getImageUrl(),
+                        'audio_url' => $opt->getAudioUrl(),
                         'text' => $opt->option_text ?? '',
                         'is_correct' => (bool) $opt->is_correct,
                     ];
@@ -450,6 +557,9 @@ class QuestionBank extends Component
     public function saveQuestion(): void
     {
         $institutionId = $this->getInstitutionId();
+        /** @var User $user */
+        $user = auth()->user();
+        $fileService = app(FileService::class);
 
         $rules = [
             'type' => 'required|string',
@@ -461,6 +571,11 @@ class QuestionBank extends Component
             'explanation' => 'nullable|string|max:2000',
             'hint' => 'nullable|string|max:1000',
             'is_active' => 'boolean',
+            'questionImage' => 'nullable|file|mimes:jpg,jpeg,png|max:51200',
+            'questionAudio' => 'nullable|file|mimes:mp3,wav,ogg,m4a|max:51200',
+            'optionImages.*' => 'nullable|file|mimes:jpg,jpeg,png|max:51200',
+            'optionAudios.*' => 'nullable|file|mimes:mp3,wav,ogg,m4a|max:51200',
+            'optionMatchImages.*' => 'nullable|file|mimes:jpg,jpeg,png|max:51200',
         ];
 
         $this->validate($rules);
@@ -468,7 +583,20 @@ class QuestionBank extends Component
         // Custom validation based on Question Type
         $this->validateOptions();
 
-        DB::transaction(function () use ($institutionId) {
+        // Process Question Media uploads
+        $imageFileId = $this->existingImageId;
+        if ($this->questionImage) {
+            $asset = $fileService->store($this->questionImage, 'question_asset', ['jpg', 'png', 'jpeg'], $user);
+            $imageFileId = $asset->id;
+        }
+
+        $audioFileId = $this->existingAudioId;
+        if ($this->questionAudio) {
+            $asset = $fileService->store($this->questionAudio, 'question_asset', ['mp3', 'wav', 'ogg', 'm4a'], $user);
+            $audioFileId = $asset->id;
+        }
+
+        DB::transaction(function () use ($institutionId, $imageFileId, $audioFileId, $fileService, $user) {
             $settings = [];
             if ($this->type === QuestionType::FillInTheBlank->value) {
                 $settings['case_sensitive'] = $this->caseSensitive;
@@ -485,6 +613,8 @@ class QuestionBank extends Component
                 'default_marks' => $this->default_marks,
                 'default_penalty_marks' => $this->default_penalty_marks,
                 'settings' => ! empty($settings) ? $settings : null,
+                'image_file_id' => $imageFileId,
+                'audio_file_id' => $audioFileId,
                 'is_active' => $this->is_active,
             ];
 
@@ -497,12 +627,12 @@ class QuestionBank extends Component
                 $question->options()->delete();
             } else {
                 Gate::authorize('create', Question::class);
-                $data['created_by'] = auth()->id();
+                $data['created_by'] = $user->id;
                 $question = Question::create($data);
             }
 
             // Save Question Options
-            $this->saveOptionsForQuestion($question);
+            $this->saveOptionsForQuestion($question, $fileService, $user);
 
             // Sync Tags
             $tagNames = array_filter(array_map('trim', explode(',', $this->tagsInput)));
@@ -512,7 +642,7 @@ class QuestionBank extends Component
             if (function_exists('activity')) {
                 activity()
                     ->performedOn($question)
-                    ->causedBy(auth()->user())
+                    ->causedBy($user)
                     ->withProperties([
                         'title' => $question->title,
                         'type' => $question->type->value,
@@ -591,9 +721,17 @@ class QuestionBank extends Component
                 if (count($this->options) < 2) {
                     $this->addError('options', __('At least 2 matching pairs are required.'));
                 }
-                foreach ($this->options as $opt) {
-                    if (trim((string) ($opt['left'] ?? '')) === '' || trim((string) ($opt['right'] ?? '')) === '') {
-                        $this->addError('options', __('Every matching pair must have both left premise and right target text.'));
+                foreach ($this->options as $index => $opt) {
+                    $hasLeft = trim((string) ($opt['left'] ?? '')) !== ''
+                        || ! empty($opt['image_file_id'])
+                        || isset($this->optionImages[$index]);
+
+                    $hasRight = trim((string) ($opt['right'] ?? '')) !== ''
+                        || ! empty($opt['match_image_file_id'])
+                        || isset($this->optionMatchImages[$index]);
+
+                    if (! $hasLeft || ! $hasRight) {
+                        $this->addError('options', __('Every matching pair must have both left premise and right target (text or image).'));
                         break;
                     }
                 }
@@ -604,10 +742,17 @@ class QuestionBank extends Component
                     $this->addError('options', __('At least 2 picture options are required.'));
                 }
                 $hasCorrect = false;
-                foreach ($this->options as $opt) {
+                foreach ($this->options as $index => $opt) {
                     if (! empty($opt['is_correct'])) {
                         $hasCorrect = true;
-                        break;
+                    }
+                    $hasContent = trim((string) ($opt['text'] ?? '')) !== ''
+                        || trim((string) ($opt['image_path'] ?? '')) !== ''
+                        || ! empty($opt['image_file_id'])
+                        || isset($this->optionImages[$index]);
+
+                    if (! $hasContent) {
+                        $this->addError('options', __('Each picture option must have an image or label.'));
                     }
                 }
                 if (! $hasCorrect) {
@@ -649,15 +794,29 @@ class QuestionBank extends Component
         }
     }
 
-    private function saveOptionsForQuestion(Question $question): void
+    private function saveOptionsForQuestion(Question $question, FileService $fileService, User $user): void
     {
         switch ($this->type) {
             case QuestionType::SingleChoice->value:
             case QuestionType::MultipleChoice->value:
                 foreach ($this->options as $index => $opt) {
+                    $imageFileId = $opt['image_file_id'] ?? null;
+                    if (isset($this->optionImages[$index]) && $this->optionImages[$index]) {
+                        $asset = $fileService->store($this->optionImages[$index], 'question_asset', ['jpg', 'png', 'jpeg'], $user);
+                        $imageFileId = $asset->id;
+                    }
+
+                    $audioFileId = $opt['audio_file_id'] ?? null;
+                    if (isset($this->optionAudios[$index]) && $this->optionAudios[$index]) {
+                        $asset = $fileService->store($this->optionAudios[$index], 'question_asset', ['mp3', 'wav', 'ogg', 'm4a'], $user);
+                        $audioFileId = $asset->id;
+                    }
+
                     QuestionOption::create([
                         'question_id' => $question->id,
                         'option_text' => trim((string) ($opt['text'] ?? '')),
+                        'image_file_id' => $imageFileId,
+                        'audio_file_id' => $audioFileId,
                         'is_correct' => ! empty($opt['is_correct']),
                         'order_position' => $index + 1,
                     ]);
@@ -677,10 +836,24 @@ class QuestionBank extends Component
 
             case QuestionType::Matching->value:
                 foreach ($this->options as $index => $opt) {
+                    $imageFileId = $opt['image_file_id'] ?? null;
+                    if (isset($this->optionImages[$index]) && $this->optionImages[$index]) {
+                        $asset = $fileService->store($this->optionImages[$index], 'question_asset', ['jpg', 'png', 'jpeg'], $user);
+                        $imageFileId = $asset->id;
+                    }
+
+                    $matchImageFileId = $opt['match_image_file_id'] ?? null;
+                    if (isset($this->optionMatchImages[$index]) && $this->optionMatchImages[$index]) {
+                        $asset = $fileService->store($this->optionMatchImages[$index], 'question_asset', ['jpg', 'png', 'jpeg'], $user);
+                        $matchImageFileId = $asset->id;
+                    }
+
                     QuestionOption::create([
                         'question_id' => $question->id,
                         'option_text' => trim((string) ($opt['left'] ?? '')),
+                        'image_file_id' => $imageFileId,
                         'match_text' => trim((string) ($opt['right'] ?? '')),
+                        'match_image_file_id' => $matchImageFileId,
                         'is_correct' => true,
                         'order_position' => $index + 1,
                     ]);
@@ -689,10 +862,24 @@ class QuestionBank extends Component
 
             case QuestionType::PictureChoice->value:
                 foreach ($this->options as $index => $opt) {
+                    $imageFileId = $opt['image_file_id'] ?? null;
+                    if (isset($this->optionImages[$index]) && $this->optionImages[$index]) {
+                        $asset = $fileService->store($this->optionImages[$index], 'question_asset', ['jpg', 'png', 'jpeg'], $user);
+                        $imageFileId = $asset->id;
+                    }
+
+                    $audioFileId = $opt['audio_file_id'] ?? null;
+                    if (isset($this->optionAudios[$index]) && $this->optionAudios[$index]) {
+                        $asset = $fileService->store($this->optionAudios[$index], 'question_asset', ['mp3', 'wav', 'ogg', 'm4a'], $user);
+                        $audioFileId = $asset->id;
+                    }
+
                     QuestionOption::create([
                         'question_id' => $question->id,
                         'option_text' => trim((string) ($opt['text'] ?? '')),
                         'image_path' => trim((string) ($opt['image_path'] ?? '')) ?: null,
+                        'image_file_id' => $imageFileId,
+                        'audio_file_id' => $audioFileId,
                         'is_correct' => ! empty($opt['is_correct']),
                         'order_position' => $index + 1,
                     ]);
@@ -715,9 +902,16 @@ class QuestionBank extends Component
 
             case QuestionType::Ordering->value:
                 foreach ($this->options as $index => $opt) {
+                    $imageFileId = $opt['image_file_id'] ?? null;
+                    if (isset($this->optionImages[$index]) && $this->optionImages[$index]) {
+                        $asset = $fileService->store($this->optionImages[$index], 'question_asset', ['jpg', 'png', 'jpeg'], $user);
+                        $imageFileId = $asset->id;
+                    }
+
                     QuestionOption::create([
                         'question_id' => $question->id,
                         'option_text' => trim((string) ($opt['text'] ?? '')),
+                        'image_file_id' => $imageFileId,
                         'order_position' => $index + 1,
                         'is_correct' => true,
                     ]);
@@ -816,7 +1010,7 @@ class QuestionBank extends Component
     {
         $institutionId = $this->getInstitutionId();
         $question = Question::where('institution_id', $institutionId)
-            ->with(['options', 'tags'])
+            ->with(['options.imageFile', 'options.audioFile', 'options.matchImageFile', 'imageFile', 'audioFile', 'tags'])
             ->findOrFail($id);
 
         Gate::authorize('view', $question);
@@ -836,7 +1030,7 @@ class QuestionBank extends Component
         $institutionId = $this->getInstitutionId();
 
         $query = Question::where('institution_id', $institutionId)
-            ->with(['creator', 'options', 'tags'])
+            ->with(['creator', 'options.imageFile', 'options.audioFile', 'options.matchImageFile', 'imageFile', 'audioFile', 'tags'])
             ->latest('id');
 
         // Search
@@ -887,7 +1081,7 @@ class QuestionBank extends Component
         $previewQuestion = null;
         if ($this->previewQuestionId) {
             $previewQuestion = Question::where('institution_id', $institutionId)
-                ->with(['options', 'tags'])
+                ->with(['options.imageFile', 'options.audioFile', 'options.matchImageFile', 'imageFile', 'audioFile', 'tags'])
                 ->find($this->previewQuestionId);
         }
 

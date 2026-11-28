@@ -63,7 +63,7 @@ return [
     'uploads' => [
         'max_size_mb' => (int) env('PORTAL_UPLOADS_MAX_SIZE_MB', 50),
         'chunk_size_mb' => (int) env('PORTAL_UPLOADS_CHUNK_SIZE_MB', 2),
-        'allowed_types' => explode(',', env('PORTAL_UPLOADS_ALLOWED_TYPES', 'mp4,mov,webm,pdf,jpg,png,zip')),
+        'allowed_types' => explode(',', env('PORTAL_UPLOADS_ALLOWED_TYPES', 'mp4,mov,webm,pdf,jpg,png,zip,mp3,wav,ogg,m4a')),
         'zip_max_entries' => (int) env('PORTAL_UPLOADS_ZIP_MAX_ENTRIES', 200),
         'zip_max_uncompressed_mb' => (int) env('PORTAL_UPLOADS_ZIP_MAX_UNCOMPRESSED_MB', 200),
     ],

@@ -30,12 +30,16 @@ use Illuminate\Support\Carbon;
  * @property float $default_marks
  * @property float $default_penalty_marks
  * @property array<string, mixed>|null $settings
+ * @property int|null $image_file_id
+ * @property int|null $audio_file_id
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read Institution|null $institution
  * @property-read User|null $creator
+ * @property-read FileAsset|null $imageFile
+ * @property-read FileAsset|null $audioFile
  * @property-read Collection<int, QuestionOption> $options
  * @property-read Collection<int, Tag> $tags
  */
@@ -57,6 +61,8 @@ class Question extends Model
         'default_marks',
         'default_penalty_marks',
         'settings',
+        'image_file_id',
+        'audio_file_id',
         'is_active',
     ];
 
@@ -89,6 +95,50 @@ class Question extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * @return BelongsTo<FileAsset, $this>
+     */
+    public function imageFile(): BelongsTo
+    {
+        return $this->belongsTo(FileAsset::class, 'image_file_id');
+    }
+
+    /**
+     * @return BelongsTo<FileAsset, $this>
+     */
+    public function audioFile(): BelongsTo
+    {
+        return $this->belongsTo(FileAsset::class, 'audio_file_id');
+    }
+
+    public function hasImage(): bool
+    {
+        return $this->image_file_id !== null || ! empty($this->settings['image_url']);
+    }
+
+    public function hasAudio(): bool
+    {
+        return $this->audio_file_id !== null || ! empty($this->settings['audio_url']);
+    }
+
+    public function getImageUrl(): ?string
+    {
+        if ($this->imageFile) {
+            return $this->imageFile->getInlineUrl();
+        }
+
+        return $this->settings['image_url'] ?? null;
+    }
+
+    public function getAudioUrl(): ?string
+    {
+        if ($this->audioFile) {
+            return $this->audioFile->getInlineUrl();
+        }
+
+        return $this->settings['audio_url'] ?? null;
     }
 
     /**
