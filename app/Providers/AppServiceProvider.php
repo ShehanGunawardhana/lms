@@ -8,10 +8,12 @@ use App\Models\Assignment;
 use App\Models\AssignmentSubmission;
 use App\Models\Question;
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use App\Models\Student;
 use App\Policies\AssignmentPolicy;
 use App\Policies\AssignmentSubmissionPolicy;
 use App\Policies\QuestionPolicy;
+use App\Policies\QuizAttemptPolicy;
 use App\Policies\QuizPolicy;
 use App\Policies\StudentPolicy;
 use App\Services\InstitutionContext;
@@ -55,5 +57,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(AssignmentSubmission::class, AssignmentSubmissionPolicy::class);
         Gate::policy(Question::class, QuestionPolicy::class);
         Gate::policy(Quiz::class, QuizPolicy::class);
+        Gate::policy(QuizAttempt::class, QuizAttemptPolicy::class);
     }
 }

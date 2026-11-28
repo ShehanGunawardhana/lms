@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\QuizAttemptStatus;
 use App\Enums\QuizMode;
 use App\Enums\QuizShowAnswersPolicy;
 use App\Enums\QuizStatus;
@@ -152,6 +153,44 @@ class Quiz extends Model
             ->withPivot(['id', 'order_position', 'marks', 'penalty_marks'])
             ->withTimestamps()
             ->orderByPivot('order_position');
+    }
+
+    /**
+     * @return HasMany<QuizAttempt, $this>
+     */
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class, 'quiz_id')->latest('id');
+    }
+
+    public function getAttemptsCountForUser(int $userId): int
+    {
+        return $this->attempts()->where('user_id', $userId)->where('status', '!=', QuizAttemptStatus::InProgress->value)->count();
+    }
+
+    public function getRemainingAttemptsForUser(int $userId): ?int
+    {
+        if (! $this->max_attempts) {
+            return null; // Unlimited
+        }
+
+        $completed = $this->getAttemptsCountForUser($userId);
+
+        return max(0, $this->max_attempts - $completed);
+    }
+
+    public function canUserAttempt(int $userId): bool
+    {
+        if (! $this->isAvailable()) {
+            return false;
+        }
+
+        $remaining = $this->getRemainingAttemptsForUser($userId);
+        if ($remaining !== null && $remaining <= 0) {
+            return false;
+        }
+
+        return true;
     }
 
     public function isStandalone(): bool

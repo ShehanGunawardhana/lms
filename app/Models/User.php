@@ -160,6 +160,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<QuizAttempt, $this>
+     */
+    public function quizAttempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class, 'user_id');
+    }
+
+    /**
      * Determine if the user has opted in (or defaults in) to a notification event on a channel.
      */
     public function wantsNotification(string $eventType, string $channel): bool

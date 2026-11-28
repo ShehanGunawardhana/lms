@@ -29,6 +29,7 @@ use App\Livewire\Public\LecturerDirectory;
 use App\Livewire\Public\LecturerPortfolioPage;
 use App\Livewire\Student\AssignmentList;
 use App\Livewire\Student\AssignmentShow;
+use App\Livewire\Student\QuizAttemptRunner;
 use App\Livewire\Teacher\ActivityManager;
 use App\Livewire\Teacher\ActivityReviewManager;
 use App\Livewire\Teacher\AssignmentManager;
@@ -195,6 +196,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/quizzes', function () {
         return redirect()->route('teacher.quizzes.index');
     })->middleware(['auth'])->name('quizzes.index');
+
+    // Quiz Runner & Attempts (§9, T-6.4)
+    Route::get('/quizzes/{quiz}', QuizAttemptRunner::class)
+        ->middleware(['auth'])
+        ->name('quizzes.show');
+
+    Route::get('/quizzes/{quiz}/attempt/{attempt?}', QuizAttemptRunner::class)
+        ->middleware(['auth'])
+        ->name('quizzes.attempt');
+
+    Route::get('/student/quizzes/{quiz}', QuizAttemptRunner::class)
+        ->middleware(['auth'])
+        ->name('student.quizzes.show');
 
     // Student & Parent Coursework Assignments Hub (§8, T-5.5)
     Route::get('/student/assignments', AssignmentList::class)
