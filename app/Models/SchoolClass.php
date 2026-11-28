@@ -150,4 +150,12 @@ class SchoolClass extends Model
     {
         return $this->title;
     }
+
+    /**
+     * @return HasMany<Quiz, $this>
+     */
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class, 'class_id');
+    }
 }

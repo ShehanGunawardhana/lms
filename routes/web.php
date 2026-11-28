@@ -35,6 +35,7 @@ use App\Livewire\Teacher\AssignmentManager;
 use App\Livewire\Teacher\AssignmentReviewManager;
 use App\Livewire\Teacher\PortfolioEditor;
 use App\Livewire\Teacher\QuestionBank;
+use App\Livewire\Teacher\QuizBuilder;
 use App\Livewire\Teacher\TeacherDashboard;
 use App\Models\Institution;
 use App\Models\User;
@@ -184,6 +185,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/teacher/question-bank', QuestionBank::class)
         ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
         ->name('teacher.questions.index');
+
+    // Quiz Builder & Quizzes Management (§9, T-6.3)
+    Route::get('/teacher/quizzes', QuizBuilder::class)
+        ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
+        ->name('teacher.quizzes.index');
+
+    // Quizzes route handler
+    Route::get('/quizzes', function () {
+        return redirect()->route('teacher.quizzes.index');
+    })->middleware(['auth'])->name('quizzes.index');
 
     // Student & Parent Coursework Assignments Hub (§8, T-5.5)
     Route::get('/student/assignments', AssignmentList::class)

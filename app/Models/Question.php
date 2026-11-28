@@ -275,4 +275,14 @@ class Question extends Model
 
         return $newQuestion;
     }
+
+    /**
+     * @return BelongsToMany<Quiz, $this>
+     */
+    public function quizzes(): BelongsToMany
+    {
+        return $this->belongsToMany(Quiz::class, 'quiz_questions', 'question_id', 'quiz_id')
+            ->withPivot(['id', 'order_position', 'marks', 'penalty_marks'])
+            ->withTimestamps();
+    }
 }

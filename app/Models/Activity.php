@@ -246,4 +246,12 @@ class Activity extends Model
 
         return true;
     }
+
+    /**
+     * @return HasMany<Quiz, $this>
+     */
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class, 'activity_id');
+    }
 }
