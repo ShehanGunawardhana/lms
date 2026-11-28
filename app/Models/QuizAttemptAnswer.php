@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\QuestionType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,12 +22,15 @@ use Illuminate\Support\Carbon;
  * @property float|null $marks_awarded
  * @property bool|null $is_correct
  * @property string|null $feedback
+ * @property Carbon|null $graded_at
+ * @property int|null $graded_by
  * @property bool $is_flagged
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read QuizAttempt|null $attempt
  * @property-read Question|null $question
  * @property-read QuestionOption|null $selectedOption
+ * @property-read User|null $grader
  */
 class QuizAttemptAnswer extends Model
 {
@@ -43,6 +47,8 @@ class QuizAttemptAnswer extends Model
         'marks_awarded',
         'is_correct',
         'feedback',
+        'graded_at',
+        'graded_by',
         'is_flagged',
     ];
 
@@ -58,6 +64,8 @@ class QuizAttemptAnswer extends Model
             'matching_answer' => 'array',
             'marks_awarded' => 'float',
             'is_correct' => 'boolean',
+            'graded_at' => 'datetime',
+            'graded_by' => 'integer',
             'is_flagged' => 'boolean',
         ];
     }
@@ -84,6 +92,19 @@ class QuizAttemptAnswer extends Model
     public function selectedOption(): BelongsTo
     {
         return $this->belongsTo(QuestionOption::class, 'selected_option_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function grader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'graded_by');
+    }
+
+    public function isPendingManualGrading(): bool
+    {
+        return $this->question?->type === QuestionType::ShortAnswer && $this->marks_awarded === null;
     }
 
     public function isAnswered(): bool

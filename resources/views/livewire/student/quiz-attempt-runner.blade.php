@@ -812,6 +812,11 @@
                                     {{ __('Time Expired') }}
                                 </span>
                             @endif
+                            @if (! $attempt->is_fully_graded)
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                                    {{ __('Pending Instructor Grading') }}
+                                </span>
+                            @endif
                         </div>
                         <h1 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100">
                             {{ __('Attempt Summary: :quiz', ['quiz' => $quiz->title]) }}
@@ -987,6 +992,12 @@
                                                     </div>
                                                 @endforeach
                                             </div>
+                                        </div>
+                                    @endif
+
+                                    @if ($ans && $ans->feedback)
+                                        <div class="mt-2 p-2.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 text-primary-900 dark:text-primary-100">
+                                            <strong>{{ __('Instructor Feedback:') }}</strong> {{ $ans->feedback }}
                                         </div>
                                     @endif
 

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\QuestionType;
 use App\Enums\QuizAttemptStatus;
+use App\Services\QuizGrader;
 use App\Support\Traits\BelongsToInstitution;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,6 +28,9 @@ use Illuminate\Support\Carbon;
  * @property float|null $total_marks
  * @property float|null $percentage
  * @property bool|null $passed
+ * @property bool $is_fully_graded
+ * @property Carbon|null $graded_at
+ * @property int|null $graded_by
  * @property int $time_spent_seconds
  * @property array<int, int>|null $question_order
  * @property array<int|string, mixed>|null $options_order
@@ -35,6 +39,7 @@ use Illuminate\Support\Carbon;
  * @property-read Institution|null $institution
  * @property-read Quiz|null $quiz
  * @property-read User|null $user
+ * @property-read User|null $grader
  * @property-read Collection<int, QuizAttemptAnswer> $answers
  */
 class QuizAttempt extends Model
@@ -54,6 +59,9 @@ class QuizAttempt extends Model
         'total_marks',
         'percentage',
         'passed',
+        'is_fully_graded',
+        'graded_at',
+        'graded_by',
         'time_spent_seconds',
         'question_order',
         'options_order',
@@ -73,6 +81,9 @@ class QuizAttempt extends Model
             'total_marks' => 'float',
             'percentage' => 'float',
             'passed' => 'boolean',
+            'is_fully_graded' => 'boolean',
+            'graded_at' => 'datetime',
+            'graded_by' => 'integer',
             'time_spent_seconds' => 'integer',
             'question_order' => 'array',
             'options_order' => 'array',
@@ -174,167 +185,36 @@ class QuizAttempt extends Model
     }
 
     /**
+     * @return BelongsTo<User, $this>
+     */
+    public function grader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'graded_by');
+    }
+
+    public function hasPendingManualGrading(): bool
+    {
+        if (! $this->is_fully_graded) {
+            return true;
+        }
+
+        return $this->answers()->whereNull('marks_awarded')->whereHas('question', function ($q) {
+            $q->where('type', QuestionType::ShortAnswer->value);
+        })->exists();
+    }
+
+    public function pendingManualGradingCount(): int
+    {
+        return $this->answers()->whereNull('marks_awarded')->whereHas('question', function ($q) {
+            $q->where('type', QuestionType::ShortAnswer->value);
+        })->count();
+    }
+
+    /**
      * Auto-mark objective questions, compute score, and finalize attempt.
      */
     public function finalizeAttempt(bool $isTimedOut = false): void
     {
-        $this->loadMissing(['quiz.quizQuestions', 'answers.question.options']);
-
-        if (! $this->quiz) {
-            return;
-        }
-
-        $now = now();
-        $this->completed_at = $now;
-        $this->time_spent_seconds = (int) max(1, $now->diffInSeconds($this->started_at));
-        $this->status = $isTimedOut ? QuizAttemptStatus::TimedOut : QuizAttemptStatus::Completed;
-
-        // Calculate marks
-        $quizQuestionsMap = [];
-        foreach ($this->quiz->quizQuestions as $qq) {
-            $quizQuestionsMap[$qq->question_id] = $qq;
-        }
-
-        $totalScore = 0.0;
-        $quizTotalMarks = (float) $this->quiz->total_marks;
-        if ($quizTotalMarks <= 0) {
-            $quizTotalMarks = (float) $this->quiz->recalculateTotalMarks();
-        }
-
-        foreach ($this->answers as $ans) {
-            $question = $ans->question;
-            if (! $question) {
-                continue;
-            }
-
-            $qq = $quizQuestionsMap[$question->id] ?? null;
-            $maxMarks = $qq ? $qq->getEffectiveMarks() : (float) $question->default_marks;
-            $penalty = $qq ? $qq->getEffectivePenalty() : (float) $question->default_penalty_marks;
-            $allowPenalty = (bool) $this->quiz->allow_negative_marking;
-
-            $isCorrect = false;
-            $awarded = 0.0;
-
-            switch ($question->type) {
-                case QuestionType::SingleChoice:
-                case QuestionType::TrueFalse:
-                case QuestionType::PictureChoice:
-                    if ($ans->selected_option_id !== null) {
-                        $chosenOpt = $question->options->firstWhere('id', $ans->selected_option_id);
-                        if ($chosenOpt && $chosenOpt->is_correct) {
-                            $isCorrect = true;
-                            $awarded = $maxMarks;
-                        } elseif ($allowPenalty && $penalty > 0) {
-                            $awarded = -$penalty;
-                        }
-                    }
-                    break;
-
-                case QuestionType::MultipleChoice:
-                    if (! empty($ans->selected_option_ids)) {
-                        $correctOptIds = $question->options->where('is_correct', true)->pluck('id')->all();
-                        sort($correctOptIds);
-                        $submitted = (array) $ans->selected_option_ids;
-                        sort($submitted);
-                        if ($correctOptIds === $submitted) {
-                            $isCorrect = true;
-                            $awarded = $maxMarks;
-                        } elseif ($allowPenalty && $penalty > 0) {
-                            $awarded = -$penalty;
-                        }
-                    }
-                    break;
-
-                case QuestionType::FillInTheBlank:
-                    if ($ans->text_answer !== null && trim($ans->text_answer) !== '') {
-                        $submittedText = trim($ans->text_answer);
-                        $firstOption = $question->options->first();
-                        $acceptable = $firstOption ? ($firstOption->acceptable_answers ?? []) : [];
-                        if (empty($acceptable) && $firstOption && $firstOption->option_text) {
-                            $acceptable = [$firstOption->option_text];
-                        }
-
-                        $caseSensitive = ! empty($question->settings['case_sensitive']);
-                        foreach ($acceptable as $target) {
-                            $match = $caseSensitive
-                                ? (strcmp($submittedText, trim((string) $target)) === 0)
-                                : (strcasecmp($submittedText, trim((string) $target)) === 0);
-
-                            if ($match) {
-                                $isCorrect = true;
-                                $awarded = $maxMarks;
-                                break;
-                            }
-                        }
-
-                        if (! $isCorrect && $allowPenalty && $penalty > 0) {
-                            $awarded = -$penalty;
-                        }
-                    }
-                    break;
-
-                case QuestionType::Ordering:
-                    if (! empty($ans->ordering_answer)) {
-                        $correctOrder = $question->options->sortBy('order_position')->pluck('id')->all();
-                        if ($correctOrder === (array) $ans->ordering_answer) {
-                            $isCorrect = true;
-                            $awarded = $maxMarks;
-                        } elseif ($allowPenalty && $penalty > 0) {
-                            $awarded = -$penalty;
-                        }
-                    }
-                    break;
-
-                case QuestionType::Matching:
-                    if (! empty($ans->matching_answer)) {
-                        $totalPairs = $question->options->count();
-                        $correctPairs = 0;
-                        foreach ($ans->matching_answer as $leftId => $rightId) {
-                            if ((int) $leftId === (int) $rightId) {
-                                $correctPairs++;
-                            }
-                        }
-
-                        if ($correctPairs === $totalPairs && $totalPairs > 0) {
-                            $isCorrect = true;
-                            $awarded = $maxMarks;
-                        } elseif ($allowPenalty && $penalty > 0) {
-                            $isCorrect = false;
-                            $awarded = -$penalty;
-                        } else {
-                            $isCorrect = false;
-                            $awarded = $totalPairs > 0 ? round(($correctPairs / $totalPairs) * $maxMarks, 2) : 0.0;
-                        }
-                    }
-                    break;
-
-                case QuestionType::ShortAnswer:
-                    // Open-ended questions are routed to manual review queue
-                    $isCorrect = null;
-                    $awarded = 0.0;
-                    break;
-
-                default:
-                    // Other question types e.g. matching
-                    $isCorrect = false;
-                    $awarded = 0.0;
-            }
-
-            $ans->is_correct = $isCorrect;
-            $ans->marks_awarded = $awarded;
-            $ans->save();
-
-            $totalScore += $awarded;
-        }
-
-        $totalScore = max(0.0, $totalScore);
-        $this->score = $totalScore;
-        $this->total_marks = $quizTotalMarks;
-
-        $percentage = $quizTotalMarks > 0 ? round(($totalScore / $quizTotalMarks) * 100, 2) : 0.0;
-        $this->percentage = $percentage;
-        $this->passed = $percentage >= (float) $this->quiz->pass_percentage;
-
-        $this->save();
+        app(QuizGrader::class)->gradeAttempt($this, $isTimedOut);
     }
 }

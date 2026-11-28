@@ -25,6 +25,17 @@
                 <span>{{ __('Question Bank') }}</span>
             </a>
 
+            <!-- Link to Manual Marking Queue (§9, T-6.6) -->
+            <a
+                href="{{ route('teacher.quizzes.grading') }}"
+                class="inline-flex items-center px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-2xl border border-slate-300 dark:border-slate-700 shadow-sm transition-colors"
+            >
+                <svg class="h-4 w-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>{{ __('Marking Queue') }}</span>
+            </a>
+
             <!-- Create Quiz Button -->
             <button
                 type="button"

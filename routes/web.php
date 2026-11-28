@@ -37,6 +37,7 @@ use App\Livewire\Teacher\AssignmentReviewManager;
 use App\Livewire\Teacher\PortfolioEditor;
 use App\Livewire\Teacher\QuestionBank;
 use App\Livewire\Teacher\QuizBuilder;
+use App\Livewire\Teacher\QuizGradingQueue;
 use App\Livewire\Teacher\TeacherDashboard;
 use App\Models\Institution;
 use App\Models\User;
@@ -191,6 +192,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/teacher/quizzes', QuizBuilder::class)
         ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
         ->name('teacher.quizzes.index');
+
+    // Quiz Manual Marking Queue (§9, T-6.6)
+    Route::get('/teacher/quizzes/grading/{quiz?}', QuizGradingQueue::class)
+        ->middleware(['role:super_admin|admin|teacher', 'two_factor.enforce'])
+        ->name('teacher.quizzes.grading');
 
     // Quizzes route handler
     Route::get('/quizzes', function () {
